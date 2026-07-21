@@ -14,19 +14,23 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
+
 @RestController
 @RequestMapping("/api/feedback")
 @RequiredArgsConstructor
 @Slf4j
+@Tag(name = "Feedback Management", description = "Endpoints for Client feedback & testimonial operations")
 public class FeedbackController {
 
     private final FeedbackService feedbackService;
 
     @PostMapping("/create/{clientId}")
-    @Operation(summary = "Submit new feedback/testimonial for a registered client")
+    @Operation(summary = "Submit new feedback/testimonial for a registered client", description = "Access Level: Protected [Required Roles: CLIENT, ADMIN]")
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "Feedback submitted successfully"),
-            @ApiResponse(responseCode = "400", description = "Invalid input data"),
+            @ApiResponse(responseCode = "400", description = "Invalid input data or rating outside scale 1-5"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized - Valid JWT token required"),
             @ApiResponse(responseCode = "404", description = "Client not found in database")
     })
     public ResponseEntity<ApiResponseDTO<FeedbackResponseDTO>> createFeedback(
@@ -44,9 +48,11 @@ public class FeedbackController {
     }
 
     @PutMapping("/update/{feedbackId}")
-    @Operation(summary = "Update feedback entry")
+    @Operation(summary = "Update feedback entry", description = "Access Level: Protected [Required Roles: CLIENT, ADMIN]")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Feedback updated successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid input data"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized - Valid JWT token required"),
             @ApiResponse(responseCode = "404", description = "Feedback not found")
     })
     public ResponseEntity<ApiResponseDTO<FeedbackResponseDTO>> updateFeedback(
@@ -65,9 +71,10 @@ public class FeedbackController {
     }
 
     @DeleteMapping("/delete/{feedbackId}")
-    @Operation(summary = "Delete feedback entry")
+    @Operation(summary = "Delete feedback entry", description = "Access Level: Protected [Required Roles: CLIENT, ADMIN]")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Feedback deleted successfully"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized - Valid JWT token required"),
             @ApiResponse(responseCode = "404", description = "Feedback not found")
     })
     public ResponseEntity<ApiResponseDTO<Object>> deleteFeedback(@PathVariable Long feedbackId) {

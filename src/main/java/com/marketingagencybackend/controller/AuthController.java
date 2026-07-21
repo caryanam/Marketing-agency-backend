@@ -26,10 +26,13 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
+
 @RestController
 @RequestMapping("/auth")
 @RequiredArgsConstructor
 @Slf4j
+@Tag(name = "Authentication", description = "Endpoints for User Login & Password Reset Management")
 public class AuthController {
 
     private final AuthenticationManager authenticationManager;
@@ -37,7 +40,7 @@ public class AuthController {
     private final PasswordResetService passwordResetService;
 
     @PostMapping("/login")
-    @Operation(summary = "Login API")
+    @Operation(summary = "User Login API", description = "Access Level: Public (No Token Required)")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Login successful"),
             @ApiResponse(responseCode = "400", description = "Invalid request data"),
@@ -74,7 +77,7 @@ public class AuthController {
 
     //Forgot Password - Send OTP
     @PostMapping("/forgot-password")
-    @Operation(summary = "Send OTP to email for password reset")
+    @Operation(summary = "Send OTP to email for password reset", description = "Access Level: Public (No Token Required)")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "OTP sent successfully"),
             @ApiResponse(responseCode = "404", description = "Email not found")
@@ -96,7 +99,7 @@ public class AuthController {
 
     //Verify OTP
     @PostMapping("/verify-otp")
-    @Operation(summary = "Verify OTP for password reset")
+    @Operation(summary = "Verify OTP for password reset", description = "Access Level: Public (No Token Required)")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "OTP verified successfully"),
             @ApiResponse(responseCode = "400", description = "Invalid or expired OTP"),
@@ -119,7 +122,7 @@ public class AuthController {
 
     //Reset Password
     @PostMapping("/reset-password")
-    @Operation(summary = "Reset password using verified OTP")
+    @Operation(summary = "Reset password using verified OTP", description = "Access Level: Public (No Token Required)")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Password reset successfully"),
             @ApiResponse(responseCode = "400", description = "OTP not verified or invalid"),

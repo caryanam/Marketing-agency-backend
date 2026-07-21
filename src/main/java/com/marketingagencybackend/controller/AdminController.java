@@ -32,10 +32,11 @@ public class AdminController {
     private final CarShowroomsCustomerService carShowroomsCustomerService;
 
     @PostMapping(value = "/car-showroom-customers/import", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @Operation(summary = "Import car showroom customers from an excel sheet (.xlsx/.xls). Empty rows are skipped automatically.")
+    @Operation(summary = "Import car showroom customers from an excel sheet (.xlsx/.xls)", description = "Access Level: Protected [Required Role: ADMIN]")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Excel data imported successfully"),
-            @ApiResponse(responseCode = "400", description = "Invalid or empty file uploaded")
+            @ApiResponse(responseCode = "400", description = "Invalid or empty file uploaded"),
+            @ApiResponse(responseCode = "403", description = "Forbidden - Admin role required")
     })
     public ResponseEntity<ApiResponseDTO<ExcelImportResponseDTO>> importCarShowroomCustomers(
             @RequestParam("file") MultipartFile file) {
@@ -54,10 +55,11 @@ public class AdminController {
     }
 
     @PatchMapping("/feedback/approve-reject")
-    @Operation(summary = "Approve or Reject feedback using request body containing feedbackId and status enum (APPROVED/REJECTED)")
+    @Operation(summary = "Approve or Reject feedback", description = "Access Level: Protected [Required Role: ADMIN]")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Feedback status updated successfully"),
             @ApiResponse(responseCode = "400", description = "Invalid request payload"),
+            @ApiResponse(responseCode = "403", description = "Forbidden - Admin role required"),
             @ApiResponse(responseCode = "404", description = "Feedback not found")
     })
     public ResponseEntity<ApiResponseDTO<FeedbackResponseDTO>> approveOrRejectFeedback(
@@ -75,9 +77,10 @@ public class AdminController {
     }
 
     @GetMapping("/feedback/{id}")
-    @Operation(summary = "Get feedback details by feedback ID")
+    @Operation(summary = "Get feedback details by feedback ID", description = "Access Level: Protected [Required Role: ADMIN]")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Successfully retrieved feedback"),
+            @ApiResponse(responseCode = "403", description = "Forbidden - Admin role required"),
             @ApiResponse(responseCode = "404", description = "Feedback not found")
     })
     public ResponseEntity<ApiResponseDTO<FeedbackResponseDTO>> getFeedbackById(@PathVariable Long id) {
@@ -94,8 +97,11 @@ public class AdminController {
     }
 
     @GetMapping("/feedback/all")
-    @Operation(summary = "Get all feedback entries")
-    @ApiResponse(responseCode = "200", description = "Successfully retrieved all feedback")
+    @Operation(summary = "Get all feedback entries", description = "Access Level: Protected [Required Role: ADMIN]")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Successfully retrieved all feedback"),
+            @ApiResponse(responseCode = "403", description = "Forbidden - Admin role required")
+    })
     public ResponseEntity<ApiResponseDTO<List<FeedbackResponseDTO>>> getAllFeedback() {
         log.info("Admin fetching all feedback");
         List<FeedbackResponseDTO> feedbackList = feedbackService.getAllFeedback();
