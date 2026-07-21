@@ -10,6 +10,9 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.bind.MissingPathVariableException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -122,6 +125,56 @@ public class GlobalExceptionHandler {
     }
 
 
+    //Path Variable Type Mismatch (e.g., passing 'abc' instead of a number)
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ApiResponseDTO<Object>> handleTypeMismatch(
+            MethodArgumentTypeMismatchException ex) {
+
+        String message = "Invalid value '" + ex.getValue() +
+                "' for parameter '" + ex.getName() + "'.";
+
+        if (ex.getRequiredType() != null) {
+            message += " Expected type: " + ex.getRequiredType().getSimpleName();
+        }
+
+        return build(HttpStatus.BAD_REQUEST, message);
+    }
+
+
+    //Missing Path Variable
+    @ExceptionHandler(MissingPathVariableException.class)
+    public ResponseEntity<ApiResponseDTO<Object>> handleMissingPathVariable(
+            MissingPathVariableException ex) {
+
+        return build(HttpStatus.BAD_REQUEST,
+                "Missing required path variable: " + ex.getVariableName());
+    }
+
+
+    //Database Constraint Violations
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ApiResponseDTO<Object>> handleDataIntegrity(
+            DataIntegrityViolationException ex) {
+
+        log.error("Data integrity violation", ex);
+
+        String message = "Database constraint violation. Please check your input data.";
+
+        Throwable rootCause = ex.getRootCause();
+        if (rootCause != null && rootCause.getMessage() != null) {
+            String rootMsg = rootCause.getMessage();
+
+            if (rootMsg.contains("Duplicate entry")) {
+                message = "Duplicate entry found. " + rootMsg;
+            } else if (rootMsg.contains("cannot be null") || rootMsg.contains("Column") ) {
+                message = "A required field is missing or null. " + rootMsg;
+            } else {
+                message = "Data integrity error: " + rootMsg;
+            }
+        }
+
+        return build(HttpStatus.CONFLICT, message);
+    }
 
 
     //Common Response Builder

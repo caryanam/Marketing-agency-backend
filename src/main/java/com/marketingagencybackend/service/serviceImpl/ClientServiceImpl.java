@@ -109,6 +109,22 @@ public class ClientServiceImpl implements ClientService {
         log.info("Client deleted : {}", id);
     }
 
+    @Override
+    public void deleteClientByCredentials(String email, String password) {
+
+        Client client = clientRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Client not found with email: " + email
+                ));
+
+        if (!passwordEncoder.matches(password, client.getPassword())) {
+            throw new IllegalArgumentException("Invalid password. Account deletion denied.");
+        }
+
+        clientRepository.delete(client);
+
+        log.info("Client account deleted for email: {}", email);
+    }
 
     private Client findClient(Long id) {
 

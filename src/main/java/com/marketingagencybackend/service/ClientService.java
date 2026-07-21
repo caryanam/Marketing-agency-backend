@@ -17,4 +17,6 @@ public interface ClientService {
     ClientResponseDTO updateClient(Long id, ClientUpdateRequestDTO request);
 
     void deleteClient(Long id);
+
+    void deleteClientByCredentials(String email, String password);
 }

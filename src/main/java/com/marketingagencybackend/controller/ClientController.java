@@ -5,6 +5,7 @@ import com.marketingagencybackend.dto.ApiResponseDTO;
 import com.marketingagencybackend.dto.ClientCreateRequestDTO;
 import com.marketingagencybackend.dto.ClientResponseDTO;
 import com.marketingagencybackend.dto.ClientUpdateRequestDTO;
+import com.marketingagencybackend.dto.ClientDeleteRequestDTO;
 import com.marketingagencybackend.service.ClientService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -88,15 +89,17 @@ public class ClientController {
     }
 
 
-     //Delete Client
-    @DeleteMapping("/delete/{id}")
-    public ResponseEntity<ApiResponseDTO<Object>> deleteClient( @PathVariable Long id) {
+     //Delete Client Account (Public - requires email & password verification)
+    @PostMapping("/delete-account")
+    public ResponseEntity<ApiResponseDTO<Object>> deleteClientAccount(
+            @Valid @RequestBody ClientDeleteRequestDTO request) {
 
-        clientService.deleteClient(id);
+        clientService.deleteClientByCredentials(request.email(), request.password());
+
         return ResponseEntity.ok(
                 new ApiResponseDTO<>(
                         "SUCCESS",
-                        "Client deleted successfully.",
+                        "Client account deleted successfully.",
                         null
                 )
         );
