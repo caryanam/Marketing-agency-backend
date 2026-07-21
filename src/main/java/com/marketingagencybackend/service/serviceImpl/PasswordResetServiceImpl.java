@@ -165,73 +165,113 @@ public class PasswordResetServiceImpl implements PasswordResetService {
         return """
                 <!DOCTYPE html>
                 <html lang="en">
+
                 <head>
-                <meta charset="UTF-8">
-                <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <title>Marketing Agency</title>
+                    <meta charset="UTF-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <title>Password Reset Verification</title>
                 </head>
 
-                <body style="margin:0;padding:0;background:#FDF8EC;font-family:'Segoe UI',Arial,sans-serif;color:#202124;">
+                <body style="margin:0;padding:0;background:#f4f6f9;font-family:'Segoe UI',Arial,sans-serif;">
 
-                <table width="100%" cellpadding="0" cellspacing="0">
+                <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f6f9;padding:40px 15px;">
                 <tr>
-                <td align="center" style="padding:40px 20px;">
+                <td align="center">
 
-                <table width="600" cellpadding="0" cellspacing="0"
-                style="background:#FFFFFF;border-radius:18px;box-shadow:0 12px 35px rgba(0,0,0,0.08);overflow:hidden;">
+                <table width="620" cellpadding="0" cellspacing="0"
+                style="background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 8px 30px rgba(0,0,0,.08);">
 
-                <!-- Header -->
+                <!-- ================= HEADER ================= -->
+
                 <tr>
-                <td style="padding:35px 40px 25px;background:linear-gradient(135deg, #2ECC71 0%, #0D9488 100%);">
+                <td align="center"
+                style="padding:45px 20px;
+                background:linear-gradient(90deg,#2CCB63 0%,#00A651 100%);">
 
-                <h2 style="margin:0;font-size:28px;font-weight:700;color:#FFFFFF;">
+                <h1 style="
+                margin:0;
+                font-size:34px;
+                font-weight:700;
+                color:#ffffff;
+                letter-spacing:0.5px;">
                 Marketing Agency
-                </h2>
-
-                <p style="margin-top:6px;font-size:15px;color:#E8FFF3;">
-                Secure Account Verification
-                </p>
+                </h1>
 
                 </td>
                 </tr>
 
-                <!-- Content -->
+                <!-- ================= BODY ================= -->
+
                 <tr>
-                <td style="padding:40px;">
+                <td style="padding:45px;">
 
-                <p style="margin:0;font-size:16px;line-height:28px;color:#202124;">
-                Hello <strong>{{NAME}}</strong>,
+                <h2 style="
+                margin-top:0;
+                font-size:28px;
+                font-weight:600;
+                color:#202124;">
+                Reset Your Password
+                </h2>
+
+                <p style="
+                font-size:16px;
+                line-height:30px;
+                color:#5f6368;">
+
+                Hello <strong>{{USER_NAME}}</strong>,
+
                 </p>
 
-                <p style="margin-top:20px;font-size:16px;line-height:28px;color:#3c4043;">
-                We received a request to verify your email address for your
+                <p style="
+                font-size:16px;
+                line-height:30px;
+                color:#5f6368;">
+
+                We received a request to reset the password for your
                 <strong>Marketing Agency</strong> account.
-                </p>
 
-                <p style="margin-top:20px;font-size:16px;line-height:28px;color:#3c4043;">
-                Use the verification code below to continue.
+                To continue, please verify your identity using the One-Time Password (OTP) below.
+
+                If you initiated this request, enter the verification code on the password reset page.
+
+                If you didn't request a password reset, you can safely ignore this email. No changes will be made to your account unless this verification code is used.
+
                 </p>
 
                 <!-- OTP -->
 
-                <table width="100%" cellpadding="0" cellspacing="0">
+                <table width="100%" cellpadding="0" cellspacing="0" style="margin:40px 0;">
                 <tr>
                 <td align="center">
 
                 <div style="
                 display:inline-block;
-                margin:30px 0;
-                padding:18px 45px;
+                padding:28px 45px;
+                background:#F8FFF9;
+                border:2px dashed #00A651;
+                border-radius:16px;">
+
+                <div style="
+                font-size:14px;
+                color:#666;
+                margin-bottom:10px;">
+                Verification Code
+                </div>
+
+                <div style="
                 font-size:42px;
                 font-weight:700;
                 letter-spacing:10px;
-                background:linear-gradient(90deg, #22C55E 0%, #0F9D8A 100%);
-                border-radius:14px;
-                color:#FFFFFF;
-                box-shadow:0 4px 15px rgba(15,157,138,0.25);
-                ">
-
+                color:#00A651;">
                 {{OTP}}
+                </div>
+
+                <div style="
+                margin-top:12px;
+                font-size:14px;
+                color:#666;">
+                Valid for 5 Minutes
+                </div>
 
                 </div>
 
@@ -239,35 +279,115 @@ public class PasswordResetServiceImpl implements PasswordResetService {
                 </tr>
                 </table>
 
-                <p style="font-size:15px;line-height:26px;color:#5f6368;">
-                This verification code will expire in
-                <strong style="color:#0F766E;">5 minutes</strong>.
+                <!-- Security Notice -->
+
+                <table width="100%" cellpadding="0" cellspacing="0"
+                style="background:#F9FAFB;border-left:5px solid #00A651;border-radius:10px;">
+
+                <tr>
+                <td style="padding:22px;">
+
+                <h3 style="
+                margin:0;
+                font-size:18px;
+                color:#202124;">
+                Security Notice
+                </h3>
+
+                <p style="
+                margin:12px 0 0;
+                font-size:15px;
+                line-height:28px;
+                color:#5f6368;">
+
+                For your protection, Marketing Agency will never ask for your password or verification code via email, phone, or message.
+
+                Please keep this code confidential and do not share it with anyone.
+
                 </p>
 
-                <p style="font-size:15px;line-height:26px;color:#5f6368;">
-                For your security, never share this code with anyone.
-                Marketing Agency will never ask for your OTP by email,
-                phone call, or message.
+                </td>
+                </tr>
+                </table>
+
+                <p style="
+                margin-top:35px;
+                font-size:15px;
+                line-height:28px;
+                color:#5f6368;">
+
+                If you're having trouble accessing your account, our support team is here to help.
+
                 </p>
 
-                <p style="font-size:15px;line-height:26px;color:#5f6368;">
-                If you didn't request this verification,
-                you can safely ignore this email.
+                <p style="
+                margin-top:25px;
+                font-size:15px;
+                color:#202124;">
+
+                Regards,<br>
+                <strong>Marketing Agency Security Team</strong>
+
                 </p>
 
                 </td>
                 </tr>
 
-                <!-- Footer -->
-                <tr>
-                <td style="padding:30px 40px;background:#FAF8F5;border-top:1px solid #ececec;">
+                <!-- ================= FOOTER ================= -->
 
-                <p style="margin:0;font-size:13px;color:#80868b;">
-                This is an automated email. Please do not reply.
+                <tr>
+                <td align="center"
+                style="
+                padding:35px;
+                background:linear-gradient(90deg,#2CCB63 0%,#00A651 100%);">
+
+                <h2 style="
+                margin:0;
+                font-size:24px;
+                font-weight:600;
+                color:#ffffff;">
+                Marketing Agency
+                </h2>
+
+                <p style="
+                margin:15px 0;
+                font-size:15px;
+                line-height:26px;
+                color:#E9FFF1;">
+                Helping businesses grow through innovative digital marketing solutions.
                 </p>
 
-                <p style="margin-top:12px;font-size:13px;color:#80868b;">
+                <p style="
+                margin:5px 0;
+                font-size:14px;
+                color:#F5FFF7;">
+                support@marketingagency.com
+                </p>
+
+                <p style="
+                margin:5px 0;
+                font-size:14px;
+                color:#F5FFF7;">
+                www.marketingagency.com
+                </p>
+
+                <hr style="
+                margin:25px 0;
+                border:none;
+                border-top:1px solid rgba(255,255,255,.25);">
+
+                <p style="
+                margin:0;
+                font-size:13px;
+                line-height:24px;
+                color:#E8FFF0;">
+
                 © 2026 Marketing Agency. All rights reserved.
+
+                <br><br>
+
+                This is an automated security email. Please do not reply to this message.
+
                 </p>
 
                 </td>
@@ -282,7 +402,7 @@ public class PasswordResetServiceImpl implements PasswordResetService {
                 </body>
                 </html>
                 """
-                .replace("{{NAME}}", displayName)
+                .replace("{{USER_NAME}}", displayName)
                 .replace("{{OTP}}", otp);
     }
 }
