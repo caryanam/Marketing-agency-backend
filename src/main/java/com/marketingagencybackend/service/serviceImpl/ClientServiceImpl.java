@@ -41,8 +41,6 @@ public class ClientServiceImpl implements ClientService {
                 .whatsappNumber(request.whatsappNumber())
                 .email(request.email())
                 .password(passwordEncoder.encode(request.password()))
-                .subscriptionPlan(request.subscriptionPlan())
-                .billingBasis(request.billingBasis())
                 .build();
 
         clientRepository.save(client);
@@ -89,8 +87,6 @@ public class ClientServiceImpl implements ClientService {
         client.setPhoneNumber(request.phoneNumber());
         client.setWhatsappNumber(request.whatsappNumber());
         client.setEmail(request.email());
-        client.setSubscriptionPlan(request.subscriptionPlan());
-        client.setBillingBasis(request.billingBasis());
 
         clientRepository.save(client);
 

@@ -68,10 +68,15 @@ public class SecurityConfig {
                                 "/api/feedback/delete/**"
                         ).hasAnyRole("CLIENT", "ADMIN")
 
-                        // 5. Client Operations (CLIENT & ADMIN)
+                        // 5. Client Profile Operations (CLIENT & ADMIN)
                         .requestMatchers(
                                 "/api/client/**"
                         ).hasAnyRole("CLIENT", "ADMIN")
+
+                        // 6. Subscription Purchase Operations (CLIENT Only)
+                        .requestMatchers(
+                                "/api/subscription/**"
+                        ).hasRole("CLIENT")
 
                         // 6. Admin Management Operations (ADMIN Only)
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")

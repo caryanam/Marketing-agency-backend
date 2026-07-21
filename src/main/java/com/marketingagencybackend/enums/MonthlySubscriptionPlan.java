@@ -1,10 +1,6 @@
 package com.marketingagencybackend.enums;
 
-public enum SubscriptionPlan {
-    STARTER_DAILY,
-    GROWTH_DAILY,
-    ENTERPRISE_DAILY,
-
+public enum MonthlySubscriptionPlan {
     STARTER_MONTHLY,
     GROWTH_MONTHLY,
     ENTERPRISE_MONTHLY

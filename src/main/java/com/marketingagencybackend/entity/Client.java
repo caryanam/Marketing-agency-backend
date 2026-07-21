@@ -1,8 +1,6 @@
 package com.marketingagencybackend.entity;
 
-import com.marketingagencybackend.enums.BillingBasis;
 import com.marketingagencybackend.enums.BusinessCategory;
-import com.marketingagencybackend.enums.SubscriptionPlan;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -49,15 +47,6 @@ public class Client {
     @Column(nullable = false)
     private String password;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private SubscriptionPlan subscriptionPlan;
-
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private BillingBasis billingBasis;
-
-
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
@@ -65,7 +54,4 @@ public class Client {
     @UpdateTimestamp
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
-
-
-
 }

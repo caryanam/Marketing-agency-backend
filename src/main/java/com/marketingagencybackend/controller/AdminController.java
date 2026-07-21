@@ -20,6 +20,11 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
+import com.marketingagencybackend.dto.SubscriptionApprovalRequestDTO;
+import com.marketingagencybackend.dto.SubscriptionPurchaseResponseDTO;
+import com.marketingagencybackend.enums.SubscriptionApprovalStatus;
+import com.marketingagencybackend.service.SubscriptionService;
+
 @RestController
 @RequestMapping("/api/admin")
 @RequiredArgsConstructor
@@ -28,8 +33,8 @@ import java.util.List;
 public class AdminController {
 
     private final FeedbackService feedbackService;
-
     private final CarShowroomsCustomerService carShowroomsCustomerService;
+    private final SubscriptionService subscriptionService;
 
     @PostMapping(value = "/car-showroom-customers/import", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "Import car showroom customers from an excel sheet (.xlsx/.xls)", description = "Access Level: Protected [Required Role: ADMIN]")
@@ -72,6 +77,67 @@ public class AdminController {
                         .status("SUCCESS")
                         .message("Feedback status updated successfully to " + requestDTO.status())
                         .data(responseDTO)
+                        .build()
+        );
+    }
+
+    @PatchMapping("/subscription/approve-reject")
+    @Operation(summary = "Approve or Reject client subscription plan purchase", description = "Access Level: Protected [Required Role: ADMIN]")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Subscription status updated successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid request payload"),
+            @ApiResponse(responseCode = "403", description = "Forbidden - Admin role required"),
+            @ApiResponse(responseCode = "404", description = "Subscription purchase request not found")
+    })
+    public ResponseEntity<ApiResponseDTO<SubscriptionPurchaseResponseDTO>> approveOrRejectSubscription(
+            @Valid @RequestBody SubscriptionApprovalRequestDTO requestDTO) {
+        log.info("Admin updating subscription status for purchaseId: {} to {}", requestDTO.purchaseId(), requestDTO.status());
+        SubscriptionPurchaseResponseDTO responseDTO = subscriptionService.approveOrRejectPurchase(requestDTO);
+
+        return ResponseEntity.ok(
+                ApiResponseDTO.<SubscriptionPurchaseResponseDTO>builder()
+                        .status("SUCCESS")
+                        .message("Subscription purchase request updated successfully to " + requestDTO.status())
+                        .data(responseDTO)
+                        .build()
+        );
+    }
+
+    @GetMapping("/subscription/all")
+    @Operation(summary = "Get all client subscription purchase requests", description = "Access Level: Protected [Required Role: ADMIN]")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Successfully retrieved all subscription purchase requests"),
+            @ApiResponse(responseCode = "403", description = "Forbidden - Admin role required")
+    })
+    public ResponseEntity<ApiResponseDTO<List<SubscriptionPurchaseResponseDTO>>> getAllSubscriptions() {
+        log.info("Admin fetching all subscription purchase requests");
+        List<SubscriptionPurchaseResponseDTO> responseList = subscriptionService.getAllPurchases();
+
+        return ResponseEntity.ok(
+                ApiResponseDTO.<List<SubscriptionPurchaseResponseDTO>>builder()
+                        .status("SUCCESS")
+                        .message("All subscription purchase requests retrieved successfully")
+                        .data(responseList)
+                        .build()
+        );
+    }
+
+    @GetMapping("/subscription/status/{status}")
+    @Operation(summary = "Get subscription purchase requests by status (PENDING/APPROVED/REJECTED)", description = "Access Level: Protected [Required Role: ADMIN]")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Successfully retrieved subscription purchase requests"),
+            @ApiResponse(responseCode = "403", description = "Forbidden - Admin role required")
+    })
+    public ResponseEntity<ApiResponseDTO<List<SubscriptionPurchaseResponseDTO>>> getSubscriptionsByStatus(
+            @PathVariable SubscriptionApprovalStatus status) {
+        log.info("Admin fetching subscription purchase requests for status: {}", status);
+        List<SubscriptionPurchaseResponseDTO> responseList = subscriptionService.getPurchasesByStatus(status);
+
+        return ResponseEntity.ok(
+                ApiResponseDTO.<List<SubscriptionPurchaseResponseDTO>>builder()
+                        .status("SUCCESS")
+                        .message("Subscription purchase requests retrieved successfully for status " + status)
+                        .data(responseList)
                         .build()
         );
     }
