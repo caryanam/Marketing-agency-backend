@@ -31,7 +31,8 @@ public class CustomUserDetailsService implements UserDetailsService {
         Optional<Client> client = clientRepository.findByEmail(email);
         if (client.isPresent()) {
             Client c = client.get();
-            return new CustomUserDetails(c.getId(), c.getEmail(), c.getPassword(), Role.CLIENT);
+            Role clientRole = (c.getRole() != null) ? c.getRole() : Role.CLIENT;
+            return new CustomUserDetails(c.getId(), c.getEmail(), c.getPassword(), clientRole);
         }
 
         throw new UsernameNotFoundException("User not found");

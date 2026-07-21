@@ -1,6 +1,7 @@
 package com.marketingagencybackend.entity;
 
 import com.marketingagencybackend.enums.BusinessCategory;
+import com.marketingagencybackend.enums.Role;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -46,6 +47,11 @@ public class Client {
 
     @Column(nullable = false)
     private String password;
+
+    @Builder.Default
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private Role role = Role.CLIENT;
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)

@@ -3,6 +3,7 @@ package com.marketingagencybackend.dto;
 import com.marketingagencybackend.enums.BusinessCategory;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
@@ -14,6 +15,7 @@ public record ClientCreateRequestDTO(
         @NotBlank(message = "Company name is required")
         String companyName,
 
+        @NotNull(message = "Business category is required")
         BusinessCategory category,
 
         @Pattern(regexp = "^[6-9]\\d{9}$",

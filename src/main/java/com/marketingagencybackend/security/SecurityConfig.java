@@ -66,7 +66,7 @@ public class SecurityConfig {
                                 "/api/feedback/create/**",
                                 "/api/feedback/update/**",
                                 "/api/feedback/delete/**"
-                        ).hasAnyRole("CLIENT", "ADMIN")
+                        ).hasRole("CLIENT")
 
                         // 5. Client Profile Operations (CLIENT & ADMIN)
                         .requestMatchers(

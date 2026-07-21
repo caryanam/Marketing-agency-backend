@@ -4,6 +4,7 @@ import com.marketingagencybackend.dto.ClientCreateRequestDTO;
 import com.marketingagencybackend.dto.ClientResponseDTO;
 import com.marketingagencybackend.dto.ClientUpdateRequestDTO;
 import com.marketingagencybackend.entity.Client;
+import com.marketingagencybackend.enums.Role;
 import com.marketingagencybackend.exception.DuplicateResourceException;
 import com.marketingagencybackend.exception.ResourceNotFoundException;
 import com.marketingagencybackend.repository.ClientRepository;
@@ -33,6 +34,10 @@ public class ClientServiceImpl implements ClientService {
 
         validateDuplicate(request.email(), request.phoneNumber());
 
+        if (request.category() == null) {
+            throw new IllegalArgumentException("Business category is required.");
+        }
+
         Client client = Client.builder()
                 .ownerName(request.ownerName())
                 .companyName(request.companyName())
@@ -41,6 +46,7 @@ public class ClientServiceImpl implements ClientService {
                 .whatsappNumber(request.whatsappNumber())
                 .email(request.email())
                 .password(passwordEncoder.encode(request.password()))
+                .role(Role.CLIENT)
                 .build();
 
         clientRepository.save(client);
@@ -80,6 +86,10 @@ public class ClientServiceImpl implements ClientService {
                 request.phoneNumber(),
                 id
         );
+
+        if (request.category() == null) {
+            throw new IllegalArgumentException("Business category is required.");
+        }
 
         client.setOwnerName(request.ownerName());
         client.setCompanyName(request.companyName());

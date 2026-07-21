@@ -2,6 +2,7 @@ package com.marketingagencybackend.dto;
 
 import com.marketingagencybackend.entity.Client;
 import com.marketingagencybackend.enums.BusinessCategory;
+import com.marketingagencybackend.enums.Role;
 
 import java.time.LocalDateTime;
 
@@ -14,6 +15,7 @@ public record ClientResponseDTO(
         String phoneNumber,
         String whatsappNumber,
         String email,
+        Role role,
         LocalDateTime createdAt
 
 ) {
@@ -29,6 +31,7 @@ public record ClientResponseDTO(
                 client.getPhoneNumber(),
                 client.getWhatsappNumber(),
                 client.getEmail(),
+                client.getRole(),
                 client.getCreatedAt()
         );
     }
