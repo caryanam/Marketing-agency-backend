@@ -1,8 +1,10 @@
 package com.marketingagencybackend.controller;
 
 import com.marketingagencybackend.dto.ApiResponseDTO;
+import com.marketingagencybackend.dto.ExcelImportResponseDTO;
 import com.marketingagencybackend.dto.FeedbackApprovalRequestDTO;
 import com.marketingagencybackend.dto.FeedbackResponseDTO;
+import com.marketingagencybackend.service.CarShowroomsCustomerService;
 import com.marketingagencybackend.service.FeedbackService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -11,8 +13,10 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -24,6 +28,30 @@ import java.util.List;
 public class AdminController {
 
     private final FeedbackService feedbackService;
+
+    private final CarShowroomsCustomerService carShowroomsCustomerService;
+
+    @PostMapping(value = "/car-showroom-customers/import", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(summary = "Import car showroom customers from an excel sheet (.xlsx/.xls). Empty rows are skipped automatically.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Excel data imported successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid or empty file uploaded")
+    })
+    public ResponseEntity<ApiResponseDTO<ExcelImportResponseDTO>> importCarShowroomCustomers(
+            @RequestParam("file") MultipartFile file) {
+
+        log.info("Admin importing car showroom customers from file: {}", file.getOriginalFilename());
+
+        ExcelImportResponseDTO responseDTO = carShowroomsCustomerService.importFromExcel(file);
+
+        return ResponseEntity.ok(
+                ApiResponseDTO.<ExcelImportResponseDTO>builder()
+                        .status("SUCCESS")
+                        .message("Car showroom customer data imported successfully")
+                        .data(responseDTO)
+                        .build()
+        );
+    }
 
     @PatchMapping("/feedback/approve-reject")
     @Operation(summary = "Approve or Reject feedback using request body containing feedbackId and status enum (APPROVED/REJECTED)")

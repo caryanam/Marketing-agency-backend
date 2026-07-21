@@ -40,44 +40,39 @@ public class SecurityConfig {
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
 
-                        // Swagger API
+                        // 1. Swagger UI & API Docs (Public)
                         .requestMatchers(
                                 "/swagger-ui/**",
                                 "/swagger-ui.html",
                                 "/v3/api-docs/**"
                         ).permitAll()
 
-                        // Public Auth, Registration, Enquiry & Client Delete-Account Endpoints
+                        // 2. Auth Endpoints (Public)
+                        .requestMatchers("/auth/**").permitAll()
+
+                        // 3. Public Client & Enquiry Endpoints
                         .requestMatchers(HttpMethod.POST,
-                                "/auth/login",
-                                "/auth/forgot-password",
-                                "/auth/verify-otp",
-                                "/auth/reset-password",
                                 "/api/client/registration",
-                                "/api/enquirie/create",
-                                "/api/client/delete-account"
+                                "/api/client/delete-account",
+                                "/api/enquirie/create"
                         ).permitAll()
 
-                        // Feedback Creation - Only registered clients (CLIENT & ADMIN)
-                        .requestMatchers(HttpMethod.POST,
-                                "/api/feedback/create/**"
+                        // 4. Feedback Management Endpoints (CLIENT & ADMIN)
+                        .requestMatchers(
+                                "/api/feedback/create/**",
+                                "/api/feedback/update/**",
+                                "/api/feedback/delete/**"
                         ).hasAnyRole("CLIENT", "ADMIN")
 
-                        // Client & Admin Feedback/Client Update Endpoints
-                        .requestMatchers(HttpMethod.PUT,
-                                "/api/client/update/**",
-                                "/api/feedback/update/**"
+                        // 5. Client Operations (CLIENT & ADMIN)
+                        .requestMatchers(
+                                "/api/client/**"
                         ).hasAnyRole("CLIENT", "ADMIN")
 
-                        // Client & Admin Feedback/Client Delete Endpoints
-                        .requestMatchers(HttpMethod.DELETE,
-                                "/api/feedback/delete/**",
-                                "/api/client/delete/**"
-                        ).hasAnyRole("CLIENT", "ADMIN")
-
-                        // Admin Controller Endpoints
+                        // 6. Admin Management Operations (ADMIN Only)
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
 
+                        // 7. All other requests require authentication
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(ex -> ex.authenticationEntryPoint((request, response, e) -> {
