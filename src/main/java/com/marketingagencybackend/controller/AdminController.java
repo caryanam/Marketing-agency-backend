@@ -4,7 +4,7 @@ import com.marketingagencybackend.dto.ApiResponseDTO;
 import com.marketingagencybackend.dto.ExcelImportResponseDTO;
 import com.marketingagencybackend.dto.FeedbackApprovalRequestDTO;
 import com.marketingagencybackend.dto.FeedbackResponseDTO;
-import com.marketingagencybackend.service.CarShowroomsCustomerService;
+import com.marketingagencybackend.service.CustomerDataService;
 import com.marketingagencybackend.service.FeedbackService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -33,27 +33,27 @@ import com.marketingagencybackend.service.SubscriptionService;
 public class AdminController {
 
     private final FeedbackService feedbackService;
-    private final CarShowroomsCustomerService carShowroomsCustomerService;
+    private final CustomerDataService customerDataService;
     private final SubscriptionService subscriptionService;
 
-    @PostMapping(value = "/car-showroom-customers/import", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @Operation(summary = "Import car showroom customers from an excel sheet (.xlsx/.xls)", description = "Access Level: Protected [Required Role: ADMIN]")
+    @PostMapping(value = "/customer-data/import", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(summary = "Import customer data from an excel sheet (.xlsx/.xls)", description = "Access Level: Protected [Required Role: ADMIN]")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Excel data imported successfully"),
             @ApiResponse(responseCode = "400", description = "Invalid or empty file uploaded"),
             @ApiResponse(responseCode = "403", description = "Forbidden - Admin role required")
     })
-    public ResponseEntity<ApiResponseDTO<ExcelImportResponseDTO>> importCarShowroomCustomers(
+    public ResponseEntity<ApiResponseDTO<ExcelImportResponseDTO>> importCustomerData(
             @RequestParam("file") MultipartFile file) {
 
-        log.info("Admin importing car showroom customers from file: {}", file.getOriginalFilename());
+        log.info("Admin importing customer data from file: {}", file.getOriginalFilename());
 
-        ExcelImportResponseDTO responseDTO = carShowroomsCustomerService.importFromExcel(file);
+        ExcelImportResponseDTO responseDTO = customerDataService.importFromExcel(file);
 
         return ResponseEntity.ok(
                 ApiResponseDTO.<ExcelImportResponseDTO>builder()
                         .status("SUCCESS")
-                        .message("Car showroom customer data imported successfully")
+                        .message("Customer data imported successfully")
                         .data(responseDTO)
                         .build()
         );

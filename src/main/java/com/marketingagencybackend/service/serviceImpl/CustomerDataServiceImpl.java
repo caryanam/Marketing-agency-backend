@@ -1,10 +1,10 @@
 package com.marketingagencybackend.service.serviceImpl;
 
-import com.marketingagencybackend.dto.CarShowroomsCustomerResponseDTO;
+import com.marketingagencybackend.dto.CustomerDataResponseDTO;
 import com.marketingagencybackend.dto.ExcelImportResponseDTO;
-import com.marketingagencybackend.entity.CarShowroomsCustomer;
-import com.marketingagencybackend.repository.CarShowroomsCustomerRepository;
-import com.marketingagencybackend.service.CarShowroomsCustomerService;
+import com.marketingagencybackend.entity.CustomerData;
+import com.marketingagencybackend.repository.CustomerDataRepository;
+import com.marketingagencybackend.service.CustomerDataService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.*;
@@ -15,19 +15,21 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
 @Transactional
 @Slf4j
-public class CarShowroomsCustomerServiceImpl implements CarShowroomsCustomerService {
+public class CustomerDataServiceImpl implements CustomerDataService {
 
     private static final int NAME_COLUMN_INDEX = 0;
     private static final int WHATSAPP_COLUMN_INDEX = 1;
     private static final int HEADER_ROW_INDEX = 0;
 
-    private final CarShowroomsCustomerRepository carShowroomsCustomerRepository;
+    private final CustomerDataRepository customerDataRepository;
 
     @Override
     public ExcelImportResponseDTO importFromExcel(MultipartFile file) {
@@ -37,8 +39,10 @@ public class CarShowroomsCustomerServiceImpl implements CarShowroomsCustomerServ
         int totalRowsRead = 0;
         int skippedEmptyRows = 0;
         int skippedInvalidRows = 0;
+        int skippedDuplicateRows = 0;
 
-        List<CarShowroomsCustomer> customersToSave = new ArrayList<>();
+        List<CustomerData> customersToSave = new ArrayList<>();
+        Set<String> seenWhatsappNumbers = new HashSet<>();
 
         try (InputStream inputStream = file.getInputStream();
              Workbook workbook = WorkbookFactory.create(inputStream)) {
@@ -58,18 +62,25 @@ public class CarShowroomsCustomerServiceImpl implements CarShowroomsCustomerServ
 
                 totalRowsRead++;
 
-                String name = getCellValueAsString(row.getCell(NAME_COLUMN_INDEX));
+                String customerName = getCellValueAsString(row.getCell(NAME_COLUMN_INDEX));
                 String whatsappNumber = getCellValueAsString(row.getCell(WHATSAPP_COLUMN_INDEX));
 
-                if (name.isBlank() || whatsappNumber.isBlank()) {
-                    log.warn("Skipping invalid row {} - missing name or whatsapp number", rowIndex + 1);
+                if (customerName.isBlank() || whatsappNumber.isBlank()) {
+                    log.warn("Skipping invalid row {} - missing customer name or whatsapp number", rowIndex + 1);
                     skippedInvalidRows++;
                     continue;
                 }
 
+                // Check for duplicate whatsapp number in database or within the same Excel sheet batch
+                if (customerDataRepository.existsByWhatsappNumber(whatsappNumber) || !seenWhatsappNumbers.add(whatsappNumber)) {
+                    log.info("Skipping duplicate row {} with WhatsApp number {}", rowIndex + 1, whatsappNumber);
+                    skippedDuplicateRows++;
+                    continue;
+                }
+
                 customersToSave.add(
-                        CarShowroomsCustomer.builder()
-                                .name(name)
+                        CustomerData.builder()
+                                .customerName(customerName)
                                 .whatsappNumber(whatsappNumber)
                                 .build()
                 );
@@ -80,13 +91,13 @@ public class CarShowroomsCustomerServiceImpl implements CarShowroomsCustomerServ
             throw new IllegalArgumentException("Unable to read the uploaded excel file. Please upload a valid .xlsx or .xls file.");
         }
 
-        List<CarShowroomsCustomer> savedCustomers = carShowroomsCustomerRepository.saveAll(customersToSave);
+        List<CustomerData> savedCustomers = customerDataRepository.saveAll(customersToSave);
 
-        log.info("Excel import completed. Read: {}, Imported: {}, Skipped empty: {}, Skipped invalid: {}",
-                totalRowsRead, savedCustomers.size(), skippedEmptyRows, skippedInvalidRows);
+        log.info("Excel import completed. Read: {}, Imported: {}, Skipped empty: {}, Skipped invalid: {}, Skipped duplicate: {}",
+                totalRowsRead, savedCustomers.size(), skippedEmptyRows, skippedInvalidRows, skippedDuplicateRows);
 
-        List<CarShowroomsCustomerResponseDTO> responseDTOs = savedCustomers.stream()
-                .map(CarShowroomsCustomerResponseDTO::from)
+        List<CustomerDataResponseDTO> responseDTOs = savedCustomers.stream()
+                .map(CustomerDataResponseDTO::from)
                 .toList();
 
         return new ExcelImportResponseDTO(
@@ -94,6 +105,7 @@ public class CarShowroomsCustomerServiceImpl implements CarShowroomsCustomerServ
                 savedCustomers.size(),
                 skippedEmptyRows,
                 skippedInvalidRows,
+                skippedDuplicateRows,
                 responseDTOs
         );
     }

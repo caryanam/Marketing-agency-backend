@@ -8,7 +8,8 @@ public record ExcelImportResponseDTO(
         int totalImported,
         int totalSkippedEmptyRows,
         int totalSkippedInvalidRows,
-        List<CarShowroomsCustomerResponseDTO> importedCustomers
+        int totalSkippedDuplicateRows,
+        List<CustomerDataResponseDTO> importedCustomers
 
 ) {
 }
