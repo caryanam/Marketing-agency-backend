@@ -50,11 +50,15 @@ public class SecurityConfig {
                         // 2. Auth Endpoints (Public)
                         .requestMatchers("/auth/**").permitAll()
 
-                        // 3. Public Client & Enquiry Endpoints
+                        // 3. Public Client, Enquiry & Public Feedback Fetch Endpoints
                         .requestMatchers(HttpMethod.POST,
                                 "/api/client/registration",
                                 "/api/client/delete-account",
                                 "/api/enquirie/create"
+                        ).permitAll()
+                        .requestMatchers(HttpMethod.GET,
+                                "/api/feedback/all",
+                                "/api/feedback/*"
                         ).permitAll()
 
                         // 4. Feedback Management Endpoints (CLIENT & ADMIN)

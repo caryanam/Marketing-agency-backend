@@ -75,43 +75,4 @@ public class AdminController {
                         .build()
         );
     }
-
-    @GetMapping("/feedback/{id}")
-    @Operation(summary = "Get feedback details by feedback ID", description = "Access Level: Protected [Required Role: ADMIN]")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Successfully retrieved feedback"),
-            @ApiResponse(responseCode = "403", description = "Forbidden - Admin role required"),
-            @ApiResponse(responseCode = "404", description = "Feedback not found")
-    })
-    public ResponseEntity<ApiResponseDTO<FeedbackResponseDTO>> getFeedbackById(@PathVariable Long id) {
-        log.info("Admin fetching feedback by id: {}", id);
-        FeedbackResponseDTO feedback = feedbackService.getFeedbackById(id);
-
-        return ResponseEntity.ok(
-                ApiResponseDTO.<FeedbackResponseDTO>builder()
-                        .status("SUCCESS")
-                        .message("Feedback retrieved successfully")
-                        .data(feedback)
-                        .build()
-        );
-    }
-
-    @GetMapping("/feedback/all")
-    @Operation(summary = "Get all feedback entries", description = "Access Level: Protected [Required Role: ADMIN]")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Successfully retrieved all feedback"),
-            @ApiResponse(responseCode = "403", description = "Forbidden - Admin role required")
-    })
-    public ResponseEntity<ApiResponseDTO<List<FeedbackResponseDTO>>> getAllFeedback() {
-        log.info("Admin fetching all feedback");
-        List<FeedbackResponseDTO> feedbackList = feedbackService.getAllFeedback();
-
-        return ResponseEntity.ok(
-                ApiResponseDTO.<List<FeedbackResponseDTO>>builder()
-                        .status("SUCCESS")
-                        .message("All feedback retrieved successfully")
-                        .data(feedbackList)
-                        .build()
-        );
-    }
 }

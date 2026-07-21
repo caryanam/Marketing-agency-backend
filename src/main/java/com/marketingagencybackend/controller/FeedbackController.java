@@ -16,6 +16,8 @@ import org.springframework.web.bind.annotation.*;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/feedback")
 @RequiredArgsConstructor
@@ -45,6 +47,43 @@ public class FeedbackController {
                         .message("Feedback submitted successfully. It will be published after admin approval.")
                         .data(responseDTO)
                         .build());
+    }
+
+    @GetMapping("/all")
+    @Operation(summary = "Get all feedback entries", description = "Access Level: Public (No Token Required)")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Successfully retrieved all feedback")
+    })
+    public ResponseEntity<ApiResponseDTO<List<FeedbackResponseDTO>>> getAllFeedback() {
+        log.info("Fetching all feedback");
+        List<FeedbackResponseDTO> feedbackList = feedbackService.getAllFeedback();
+
+        return ResponseEntity.ok(
+                ApiResponseDTO.<List<FeedbackResponseDTO>>builder()
+                        .status("SUCCESS")
+                        .message("All feedback retrieved successfully")
+                        .data(feedbackList)
+                        .build()
+        );
+    }
+
+    @GetMapping("/{id}")
+    @Operation(summary = "Get feedback details by ID", description = "Access Level: Public (No Token Required)")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Successfully retrieved feedback"),
+            @ApiResponse(responseCode = "404", description = "Feedback not found")
+    })
+    public ResponseEntity<ApiResponseDTO<FeedbackResponseDTO>> getFeedbackById(@PathVariable Long id) {
+        log.info("Fetching feedback by id: {}", id);
+        FeedbackResponseDTO feedback = feedbackService.getFeedbackById(id);
+
+        return ResponseEntity.ok(
+                ApiResponseDTO.<FeedbackResponseDTO>builder()
+                        .status("SUCCESS")
+                        .message("Feedback retrieved successfully")
+                        .data(feedback)
+                        .build()
+        );
     }
 
     @PutMapping("/update/{feedbackId}")
