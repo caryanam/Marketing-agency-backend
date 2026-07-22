@@ -3,6 +3,7 @@ package com.marketingagencybackend.security;
 import com.marketingagencybackend.enums.Role;
 import com.marketingagencybackend.repository.AdminRepository;
 import com.marketingagencybackend.repository.ClientRepository;
+import com.marketingagencybackend.service.serviceImpl.TokenBlacklistService;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
@@ -33,6 +34,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtService jwtService;
     private final AdminRepository adminRepository;
     private final ClientRepository clientRepository;
+    private final TokenBlacklistService tokenBlacklistService;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
@@ -46,6 +48,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             try {
                 Jws<Claims> parsed = jwtService.parse(token);
                 Claims payload = parsed.getPayload();
+
+                // Check if the token has been blacklisted (user logged out)
+                String jti = payload.getId();
+                if (jti != null && tokenBlacklistService.isBlacklisted(jti)) {
+                    log.info("Rejected blacklisted JWT with jti={}", jti);
+                    request.setAttribute("error", "Token has been invalidated");
+                    filterChain.doFilter(request, response);
+                    return;
+                }
 
                 Long id = Long.valueOf(payload.getSubject());
                 Role role = Role.valueOf(payload.get("role", String.class));
@@ -116,7 +127,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String path = request.getServletPath();
         String method = request.getMethod();
 
-        return path.startsWith("/auth/")
+        return (path.startsWith("/auth/") && !path.equals("/auth/logout"))
                 || path.startsWith("/swagger-ui")
                 || path.startsWith("/v3/api-docs")
                 || path.equals("/api/client/registration")

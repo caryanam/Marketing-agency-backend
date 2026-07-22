@@ -9,9 +9,13 @@ import com.marketingagencybackend.dto.VerifyOtpRequestDTO;
 import com.marketingagencybackend.security.CustomUserDetails;
 import com.marketingagencybackend.security.JwtService;
 import com.marketingagencybackend.service.PasswordResetService;
+import com.marketingagencybackend.service.serviceImpl.TokenBlacklistService;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jws;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -32,12 +36,13 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 @RequestMapping("/auth")
 @RequiredArgsConstructor
 @Slf4j
-@Tag(name = "Authentication", description = "Endpoints for User Login & Password Reset Management")
+@Tag(name = "Authentication", description = "Endpoints for User Login, Logout & Password Reset Management")
 public class AuthController {
 
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
     private final PasswordResetService passwordResetService;
+    private final TokenBlacklistService tokenBlacklistService;
 
     @PostMapping("/login")
     @Operation(summary = "User Login API", description = "Access Level: Public (No Token Required)")
@@ -72,6 +77,40 @@ public class AuthController {
                 )
         );
 
+    }
+
+    @PostMapping("/logout")
+    @Operation(summary = "User Logout API", description = "Access Level: Authenticated (Token Required). Invalidates the current JWT token.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Logout successful"),
+            @ApiResponse(responseCode = "401", description = "Invalid or missing token")
+    })
+    public ResponseEntity<ApiResponseDTO<Object>> logout(HttpServletRequest request) {
+        String header = request.getHeader("Authorization");
+
+        if (header != null && header.startsWith("Bearer ")) {
+            String token = header.substring(7);
+
+            try {
+                Jws<Claims> parsed = jwtService.parse(token);
+                String jti = parsed.getPayload().getId();
+
+                if (jti != null) {
+                    tokenBlacklistService.blacklist(jti);
+                    log.info("Token blacklisted successfully, jti={}", jti);
+                }
+            } catch (Exception e) {
+                log.warn("Logout attempted with invalid token: {}", e.getMessage());
+            }
+        }
+
+        return ResponseEntity.ok(
+                new ApiResponseDTO<>(
+                        "SUCCESS",
+                        "Logout Successfully",
+                        null
+                )
+        );
     }
 
 

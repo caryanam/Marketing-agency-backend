@@ -47,7 +47,8 @@ public class SecurityConfig {
                                 "/v3/api-docs/**"
                         ).permitAll()
 
-                        // 2. Auth Endpoints (Public)
+                        // 2. Auth Endpoints (Public, except logout which requires authentication)
+                        .requestMatchers("/auth/logout").authenticated()
                         .requestMatchers("/auth/**").permitAll()
 
                         // 3. Public Client, Enquiry & Public Feedback Fetch Endpoints
