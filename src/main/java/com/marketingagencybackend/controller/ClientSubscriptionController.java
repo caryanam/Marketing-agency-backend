@@ -9,6 +9,8 @@ import com.marketingagencybackend.dto.response.SubscriptionUsageResponseDTO;
 import com.marketingagencybackend.security.CustomUserDetails;
 import com.marketingagencybackend.service.ClientSubscriptionService;
 import com.marketingagencybackend.service.SubscriptionPlanService;
+import com.marketingagencybackend.service.CampaignService;
+import com.marketingagencybackend.dto.response.CampaignResponseDTO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -29,9 +31,10 @@ public class ClientSubscriptionController {
 
     private final SubscriptionPlanService planService;
     private final ClientSubscriptionService subscriptionService;
+    private final CampaignService campaignService;
 
     // --- PLANS (View Only) ---
-    
+
     @GetMapping("/plans")
     @Operation(summary = "Get all active subscription plans")
     public ResponseEntity<ApiResponseDTO<List<PlanResponseDTO>>> getActivePlans() {
@@ -45,13 +48,13 @@ public class ClientSubscriptionController {
     }
 
     // --- PURCHASING & UPGRADES ---
-    
+
     @PostMapping("/subscription/purchase")
     @Operation(summary = "Purchase a new subscription plan")
     public ResponseEntity<ApiResponseDTO<ClientSubscriptionResponseDTO>> purchaseSubscription(
             @AuthenticationPrincipal CustomUserDetails client,
             @Valid @RequestBody PurchaseSubscriptionRequestDTO request) {
-        return ResponseEntity.ok(new ApiResponseDTO<>("SUCCESS", "Subscription purchase requested successfully. Awaiting admin approval.", 
+        return ResponseEntity.ok(new ApiResponseDTO<>("SUCCESS", "Subscription purchase requested successfully. Awaiting admin approval.",
                 subscriptionService.purchaseSubscription(client.getId(), request)));
     }
 
@@ -60,17 +63,17 @@ public class ClientSubscriptionController {
     public ResponseEntity<ApiResponseDTO<ClientSubscriptionResponseDTO>> upgradeSubscription(
             @AuthenticationPrincipal CustomUserDetails client,
             @Valid @RequestBody PurchaseSubscriptionRequestDTO request) {
-        return ResponseEntity.ok(new ApiResponseDTO<>("SUCCESS", "Subscription upgrade requested successfully. Awaiting admin approval.", 
+        return ResponseEntity.ok(new ApiResponseDTO<>("SUCCESS", "Subscription upgrade requested successfully. Awaiting admin approval.",
                 subscriptionService.upgradeSubscription(client.getId(), request)));
     }
 
     // --- USAGE & HISTORY ---
-    
+
     @GetMapping("/subscription/current")
     @Operation(summary = "Get current active subscription details")
     public ResponseEntity<ApiResponseDTO<ClientSubscriptionResponseDTO>> getCurrentSubscription(
             @AuthenticationPrincipal CustomUserDetails client) {
-        return ResponseEntity.ok(new ApiResponseDTO<>("SUCCESS", "Current subscription fetched", 
+        return ResponseEntity.ok(new ApiResponseDTO<>("SUCCESS", "Current subscription fetched",
                 subscriptionService.getCurrentSubscription(client.getId())));
     }
 
@@ -78,7 +81,7 @@ public class ClientSubscriptionController {
     @Operation(summary = "Get all past and current subscriptions")
     public ResponseEntity<ApiResponseDTO<List<ClientSubscriptionResponseDTO>>> getSubscriptionHistory(
             @AuthenticationPrincipal CustomUserDetails client) {
-        return ResponseEntity.ok(new ApiResponseDTO<>("SUCCESS", "Subscription history fetched", 
+        return ResponseEntity.ok(new ApiResponseDTO<>("SUCCESS", "Subscription history fetched",
                 subscriptionService.getSubscriptionHistory(client.getId())));
     }
 
@@ -86,7 +89,7 @@ public class ClientSubscriptionController {
     @Operation(summary = "Get current usage metrics (messages and campaigns)")
     public ResponseEntity<ApiResponseDTO<SubscriptionUsageResponseDTO>> getSubscriptionUsage(
             @AuthenticationPrincipal CustomUserDetails client) {
-        return ResponseEntity.ok(new ApiResponseDTO<>("SUCCESS", "Subscription usage fetched", 
+        return ResponseEntity.ok(new ApiResponseDTO<>("SUCCESS", "Subscription usage fetched",
                 subscriptionService.getSubscriptionUsage(client.getId())));
     }
 
@@ -94,7 +97,15 @@ public class ClientSubscriptionController {
     @Operation(summary = "Get payment history")
     public ResponseEntity<ApiResponseDTO<List<PaymentHistoryResponseDTO>>> getPaymentHistory(
             @AuthenticationPrincipal CustomUserDetails client) {
-        return ResponseEntity.ok(new ApiResponseDTO<>("SUCCESS", "Payment history fetched", 
+        return ResponseEntity.ok(new ApiResponseDTO<>("SUCCESS", "Payment history fetched",
                 subscriptionService.getPaymentHistory(client.getId())));
+    }
+
+    @GetMapping("/subscription/campaigns")
+    @Operation(summary = "Get current client's campaigns")
+    public ResponseEntity<ApiResponseDTO<List<CampaignResponseDTO>>> getClientCampaigns(
+            @AuthenticationPrincipal CustomUserDetails client) {
+        return ResponseEntity.ok(new ApiResponseDTO<>("SUCCESS", "Campaigns fetched successfully",
+                campaignService.getCampaignsByClient(client.getId())));
     }
 }

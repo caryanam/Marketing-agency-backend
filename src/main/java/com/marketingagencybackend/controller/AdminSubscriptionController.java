@@ -34,7 +34,7 @@ public class AdminSubscriptionController {
     private final AnalyticsService analyticsService;
 
     // --- PLANS ---
-    
+
     @PostMapping("/plans")
     @Operation(summary = "Create a new subscription plan")
     public ResponseEntity<ApiResponseDTO<PlanResponseDTO>> createPlan(@Valid @RequestBody PlanRequestDTO request) {
@@ -61,7 +61,7 @@ public class AdminSubscriptionController {
     }
 
     // --- SUBSCRIPTIONS & PAYMENTS ---
-    
+
     @GetMapping("/subscriptions")
     @Operation(summary = "Get all client subscriptions")
     public ResponseEntity<ApiResponseDTO<List<ClientSubscriptionResponseDTO>>> getAllSubscriptions() {
@@ -83,20 +83,20 @@ public class AdminSubscriptionController {
     @PatchMapping("/payment/{id}/approve-reject")
     @Operation(summary = "Approve or reject a pending payment")
     public ResponseEntity<ApiResponseDTO<ClientSubscriptionResponseDTO>> approveOrRejectPayment(
-            @PathVariable Long id, 
+            @PathVariable Long id,
             @AuthenticationPrincipal CustomUserDetails admin,
             @Valid @RequestBody PaymentApprovalRequestDTO request) {
-        
-        String message = request.getStatus().name().equals("APPROVED") 
-                ? "Payment approved and subscription activated" 
+
+        String message = request.getStatus().name().equals("APPROVED")
+                ? "Payment approved and subscription activated"
                 : "Payment rejected";
-                
-        return ResponseEntity.ok(new ApiResponseDTO<>("SUCCESS", message, 
+
+        return ResponseEntity.ok(new ApiResponseDTO<>("SUCCESS", message,
                 subscriptionService.approveOrRejectPayment(id, admin.getUsername(), request)));
     }
 
     // --- CAMPAIGNS ---
-    
+
     @PostMapping("/campaign")
     @Operation(summary = "Create a new campaign for a client")
     public ResponseEntity<ApiResponseDTO<CampaignResponseDTO>> createCampaign(@Valid @RequestBody CampaignRequestDTO request) {
@@ -127,8 +127,14 @@ public class AdminSubscriptionController {
         return ResponseEntity.ok(new ApiResponseDTO<>("SUCCESS", "Campaign stopped", campaignService.stopCampaign(id)));
     }
 
+    @GetMapping("/campaigns")
+    @Operation(summary = "Get all campaigns across all clients")
+    public ResponseEntity<ApiResponseDTO<List<CampaignResponseDTO>>> getAllCampaigns() {
+        return ResponseEntity.ok(new ApiResponseDTO<>("SUCCESS", "Campaigns fetched successfully", campaignService.getAllCampaigns()));
+    }
+
     // --- ANALYTICS ---
-    
+
     @GetMapping("/analytics")
     @Operation(summary = "Get platform-wide analytics")
     public ResponseEntity<ApiResponseDTO<AdminAnalyticsResponseDTO>> getAnalytics() {

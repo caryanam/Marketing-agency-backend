@@ -15,6 +15,7 @@ import com.marketingagencybackend.repository.CampaignRepository;
 import com.marketingagencybackend.repository.ClientRepository;
 import com.marketingagencybackend.repository.ClientSubscriptionRepository;
 import com.marketingagencybackend.service.CampaignService;
+import com.marketingagencybackend.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
@@ -29,8 +30,9 @@ import java.util.stream.Collectors;
 public class CampaignServiceImpl implements CampaignService {
 
     private final CampaignRepository campaignRepository;
-    private final ClientSubscriptionRepository clientSubscriptionRepository;
     private final ClientRepository clientRepository;
+    private final ClientSubscriptionRepository subscriptionRepository;
+    private final NotificationService notificationService;
     private final ModelMapper modelMapper;
 
     @Override
@@ -40,25 +42,17 @@ public class CampaignServiceImpl implements CampaignService {
         Client client = clientRepository.findById(request.getClientId())
                 .orElseThrow(() -> new ResourceNotFoundException("Client not found"));
                 
-        // Check for active subscription
-        ClientSubscription activeSub = clientSubscriptionRepository.findByClientIdAndSubscriptionStatus(client.getId(), SubscriptionStatus.ACTIVE)
+        ClientSubscription activeSub = subscriptionRepository.findByClientIdAndSubscriptionStatus(request.getClientId(), SubscriptionStatus.ACTIVE)
                 .orElseThrow(() -> new SubscriptionException("Client does not have an active subscription"));
                 
-        // Check if subscription has expired
         if (activeSub.getExpiryDate().isBefore(LocalDateTime.now())) {
-            activeSub.setSubscriptionStatus(SubscriptionStatus.EXPIRED);
-            clientSubscriptionRepository.save(activeSub);
-            throw new SubscriptionException("Subscription has expired. Cannot create new campaigns.");
+            throw new SubscriptionException("Subscription has expired. Cannot create campaign.");
+        }
+                
+        if (activeSub.getCampaignUsed() >= activeSub.getSubscriptionPlan().getCampaignLimit()) {
+            throw new CampaignException("Campaign Limit Exceeded. Maximum allowed: " + activeSub.getSubscriptionPlan().getCampaignLimit());
         }
         
-        SubscriptionPlan plan = activeSub.getSubscriptionPlan();
-        
-        // Validate Campaign Limits
-        if (activeSub.getCampaignUsed() >= plan.getCampaignLimit()) {
-            throw new CampaignException("Campaign Limit Exceeded. You have used " + activeSub.getCampaignUsed() + " out of " + plan.getCampaignLimit() + " allowed campaigns.");
-        }
-
-        // Create campaign
         Campaign campaign = new Campaign();
         campaign.setClient(client);
         campaign.setSubscription(activeSub);
@@ -68,9 +62,12 @@ public class CampaignServiceImpl implements CampaignService {
         
         Campaign savedCampaign = campaignRepository.save(campaign);
         
-        // Update subscription campaign count
+        // Update client usage
         activeSub.setCampaignUsed(activeSub.getCampaignUsed() + 1);
-        clientSubscriptionRepository.save(activeSub);
+        subscriptionRepository.save(activeSub);
+        
+        notificationService.sendNotification(client.getEmail(), "New Campaign Created", 
+                "A new campaign '" + request.getCampaignName() + "' has been created for your account.", com.marketingagencybackend.enums.NotificationType.CAMPAIGN);
 
         return modelMapper.map(savedCampaign, CampaignResponseDTO.class);
     }
@@ -82,34 +79,33 @@ public class CampaignServiceImpl implements CampaignService {
                 .orElseThrow(() -> new ResourceNotFoundException("Campaign not found"));
                 
         if (campaign.getCampaignStatus() == CampaignStatus.COMPLETED || campaign.getCampaignStatus() == CampaignStatus.STOPPED) {
-            throw new CampaignException("Cannot run a campaign that is already " + campaign.getCampaignStatus());
+            throw new CampaignException("Cannot run a campaign that is " + campaign.getCampaignStatus());
         }
         
         ClientSubscription activeSub = campaign.getSubscription();
         
-        if (activeSub.getSubscriptionStatus() != SubscriptionStatus.ACTIVE) {
-            throw new SubscriptionException("Subscription is not active (Status: " + activeSub.getSubscriptionStatus() + ")");
-        }
-        
         if (activeSub.getExpiryDate().isBefore(LocalDateTime.now())) {
-            throw new SubscriptionException("Subscription has expired");
+            throw new SubscriptionException("Subscription has expired. Cannot run campaign.");
         }
         
-        // Validate Message Limit
         if (activeSub.getRemainingMessages() < messagesToSend) {
             throw new CampaignException("Message Limit Exceeded. Remaining: " + activeSub.getRemainingMessages() + ", Requested: " + messagesToSend);
         }
         
-        // Update campaign
+        // Execute run
         campaign.setCampaignStatus(CampaignStatus.RUNNING);
         campaign.setMessagesSent(campaign.getMessagesSent() + messagesToSend);
-        Campaign updatedCampaign = campaignRepository.save(campaign);
         
-        // Decrease remaining messages
+        // Deduct messages
         activeSub.setRemainingMessages(activeSub.getRemainingMessages() - messagesToSend);
-        clientSubscriptionRepository.save(activeSub);
         
-        return modelMapper.map(updatedCampaign, CampaignResponseDTO.class);
+        campaignRepository.save(campaign);
+        subscriptionRepository.save(activeSub);
+        
+        notificationService.sendNotification(activeSub.getClient().getEmail(), "Campaign Running", 
+                "Your campaign '" + campaign.getCampaignName() + "' is running. " + messagesToSend + " messages sent.", com.marketingagencybackend.enums.NotificationType.CAMPAIGN);
+
+        return modelMapper.map(campaign, CampaignResponseDTO.class);
     }
 
     @Override
@@ -119,11 +115,16 @@ public class CampaignServiceImpl implements CampaignService {
                 .orElseThrow(() -> new ResourceNotFoundException("Campaign not found"));
                 
         if (campaign.getCampaignStatus() != CampaignStatus.RUNNING) {
-            throw new CampaignException("Only running campaigns can be paused");
+            throw new CampaignException("Only RUNNING campaigns can be paused. Current status: " + campaign.getCampaignStatus());
         }
         
         campaign.setCampaignStatus(CampaignStatus.PAUSED);
-        return modelMapper.map(campaignRepository.save(campaign), CampaignResponseDTO.class);
+        Campaign saved = campaignRepository.save(campaign);
+        
+        notificationService.sendNotification(campaign.getSubscription().getClient().getEmail(), "Campaign Paused", 
+                "Your campaign '" + campaign.getCampaignName() + "' has been paused.", com.marketingagencybackend.enums.NotificationType.CAMPAIGN);
+                
+        return modelMapper.map(saved, CampaignResponseDTO.class);
     }
 
     @Override
@@ -133,16 +134,16 @@ public class CampaignServiceImpl implements CampaignService {
                 .orElseThrow(() -> new ResourceNotFoundException("Campaign not found"));
                 
         if (campaign.getCampaignStatus() != CampaignStatus.PAUSED) {
-            throw new CampaignException("Only paused campaigns can be resumed");
-        }
-        
-        ClientSubscription activeSub = campaign.getSubscription();
-        if (activeSub.getSubscriptionStatus() != SubscriptionStatus.ACTIVE) {
-            throw new SubscriptionException("Subscription is not active");
+            throw new CampaignException("Only PAUSED campaigns can be resumed. Current status: " + campaign.getCampaignStatus());
         }
         
         campaign.setCampaignStatus(CampaignStatus.RUNNING);
-        return modelMapper.map(campaignRepository.save(campaign), CampaignResponseDTO.class);
+        Campaign saved = campaignRepository.save(campaign);
+        
+        notificationService.sendNotification(campaign.getSubscription().getClient().getEmail(), "Campaign Resumed", 
+                "Your campaign '" + campaign.getCampaignName() + "' has been resumed.", com.marketingagencybackend.enums.NotificationType.CAMPAIGN);
+                
+        return modelMapper.map(saved, CampaignResponseDTO.class);
     }
 
     @Override
@@ -151,12 +152,17 @@ public class CampaignServiceImpl implements CampaignService {
         Campaign campaign = campaignRepository.findById(campaignId)
                 .orElseThrow(() -> new ResourceNotFoundException("Campaign not found"));
                 
-        if (campaign.getCampaignStatus() == CampaignStatus.COMPLETED) {
-            throw new CampaignException("Campaign is already completed");
+        if (campaign.getCampaignStatus() == CampaignStatus.COMPLETED || campaign.getCampaignStatus() == CampaignStatus.STOPPED) {
+            throw new CampaignException("Campaign is already " + campaign.getCampaignStatus());
         }
         
         campaign.setCampaignStatus(CampaignStatus.STOPPED);
-        return modelMapper.map(campaignRepository.save(campaign), CampaignResponseDTO.class);
+        Campaign saved = campaignRepository.save(campaign);
+        
+        notificationService.sendNotification(campaign.getSubscription().getClient().getEmail(), "Campaign Stopped", 
+                "Your campaign '" + campaign.getCampaignName() + "' has been stopped by the Admin.", com.marketingagencybackend.enums.NotificationType.CAMPAIGN);
+                
+        return modelMapper.map(saved, CampaignResponseDTO.class);
     }
 
     @Override

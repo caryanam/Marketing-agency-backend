@@ -18,6 +18,7 @@ import com.marketingagencybackend.repository.ClientSubscriptionRepository;
 import com.marketingagencybackend.repository.PaymentHistoryRepository;
 import com.marketingagencybackend.repository.SubscriptionPlanRepository;
 import com.marketingagencybackend.service.ClientSubscriptionService;
+import com.marketingagencybackend.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
@@ -37,6 +38,7 @@ public class ClientSubscriptionServiceImpl implements ClientSubscriptionService 
     private final SubscriptionPlanRepository planRepository;
     private final ClientRepository clientRepository;
     private final PaymentHistoryRepository paymentHistoryRepository;
+    private final NotificationService notificationService;
     private final ModelMapper modelMapper;
 
     @Override
@@ -78,6 +80,12 @@ public class ClientSubscriptionServiceImpl implements ClientSubscriptionService 
         
         // Create payment history
         createPaymentHistory(savedSubscription, request.getPaymentMethod());
+        
+        // Send Notifications
+        notificationService.sendNotification(client.getEmail(), "Subscription Purchase Pending", 
+                "You have requested to purchase the " + plan.getPlanName() + " plan. Awaiting Admin verification.", com.marketingagencybackend.enums.NotificationType.PAYMENT);
+        notificationService.sendToAllAdmins("New Subscription Purchase", 
+                "Client " + client.getOwnerName() + " has purchased the " + plan.getPlanName() + " plan. Payment requires verification.", com.marketingagencybackend.enums.NotificationType.PAYMENT);
 
         return mapToResponse(savedSubscription);
     }
@@ -119,6 +127,12 @@ public class ClientSubscriptionServiceImpl implements ClientSubscriptionService 
         
         // Create payment history
         createPaymentHistory(savedSubscription, request.getPaymentMethod());
+        
+        // Send Notifications
+        notificationService.sendNotification(client.getEmail(), "Subscription Upgrade Pending", 
+                "You have requested to upgrade to the " + plan.getPlanName() + " plan. Awaiting Admin verification.", com.marketingagencybackend.enums.NotificationType.SUBSCRIPTION);
+        notificationService.sendToAllAdmins("New Subscription Upgrade", 
+                "Client " + client.getOwnerName() + " requested an upgrade to the " + plan.getPlanName() + " plan. Payment requires verification.", com.marketingagencybackend.enums.NotificationType.SUBSCRIPTION);
 
         return mapToResponse(savedSubscription);
     }
@@ -240,10 +254,16 @@ public class ClientSubscriptionServiceImpl implements ClientSubscriptionService 
             subscription.setExpiryDate(LocalDateTime.now().plusDays(plan.getValidityDays()));
             subscription.setRemainingMessages(plan.getMessageLimit());
             subscription.setCampaignUsed(0);
+            
+            notificationService.sendNotification(subscription.getClient().getEmail(), "Payment Approved", 
+                    "Your payment has been verified. The " + plan.getPlanName() + " plan is now active!", com.marketingagencybackend.enums.NotificationType.SUBSCRIPTION);
         } else {
             // Update Subscription to REJECTED
             subscription.setPaymentStatus(PaymentStatus.REJECTED);
             subscription.setSubscriptionStatus(SubscriptionStatus.REJECTED);
+            
+            notificationService.sendNotification(subscription.getClient().getEmail(), "Payment Rejected", 
+                    "Your payment verification failed. Reason: " + request.getRemarks(), com.marketingagencybackend.enums.NotificationType.PAYMENT);
         }
         
         ClientSubscription savedSubscription = clientSubscriptionRepository.save(subscription);
