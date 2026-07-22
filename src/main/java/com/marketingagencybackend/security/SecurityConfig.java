@@ -1,10 +1,12 @@
 package com.marketingagencybackend.security;
 
 import com.marketingagencybackend.dto.ApiResponseDTO;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
@@ -12,7 +14,6 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
@@ -20,7 +21,6 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-import tools.jackson.databind.ObjectMapper;
 
 import java.util.List;
 
@@ -79,25 +79,60 @@ public class SecurityConfig {
                                 "/api/subscription/**"
                         ).hasRole("CLIENT")
 
-                        // 6. Admin Management Operations (ADMIN Only)
+                        // 7. Admin Management Operations (ADMIN Only)
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
 
-                        // 7. All other requests require authentication
+                        // 8. All other requests require authentication
                         .anyRequest().authenticated()
                 )
-                .exceptionHandling(ex -> ex.authenticationEntryPoint((request, response, e) -> {
-                    response.setStatus(401);
-                    response.setContentType("application/json");
 
-                    String message = e.getMessage();
-                    String error = (String) request.getAttribute("error");
-                    if (error != null) {
-                        message = error;
-                    }
+                // ── 401 Unauthorized Handler ──
+                // Triggered when: no token, expired token, invalid token, blacklisted token
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint((request, response, authException) -> {
+                            response.setStatus(HttpStatus.UNAUTHORIZED.value());
+                            response.setContentType("application/json");
+                            response.setCharacterEncoding("UTF-8");
 
-                    ApiResponseDTO<Object> body = new ApiResponseDTO<>("FAIL", message, null);
-                    response.getWriter().write(objectMapper.writeValueAsString(body));
-                }))
+                            // Use the specific error message set by JwtAuthenticationFilter
+                            String error = (String) request.getAttribute("error");
+                            String message;
+
+                            if (error != null) {
+                                // Map filter-level error attributes to user-friendly messages
+                                message = switch (error) {
+                                    case "Token Expired" ->
+                                            "Your session has expired. Please login again.";
+                                    case "Invalid Token" ->
+                                            "Invalid authentication token. Please login again.";
+                                    case "Token has been invalidated" ->
+                                            "Your session has been logged out. Please login again.";
+                                    default -> error;
+                                };
+                            } else {
+                                // No token was provided at all
+                                message = "Authentication required. Please provide a valid token.";
+                            }
+
+                            ApiResponseDTO<Object> body = new ApiResponseDTO<>("FAIL", message, null);
+                            response.getWriter().write(objectMapper.writeValueAsString(body));
+                        })
+
+                        // ── 403 Forbidden / Access Denied Handler ──
+                        // Triggered when: valid token but wrong role (e.g. CLIENT accessing ADMIN endpoint)
+                        .accessDeniedHandler((request, response, accessDeniedException) -> {
+                            response.setStatus(HttpStatus.FORBIDDEN.value());
+                            response.setContentType("application/json");
+                            response.setCharacterEncoding("UTF-8");
+
+                            ApiResponseDTO<Object> body = new ApiResponseDTO<>(
+                                    "FAIL",
+                                    "Access denied. You do not have permission to access this resource.",
+                                    null
+                            );
+                            response.getWriter().write(objectMapper.writeValueAsString(body));
+                        })
+                )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
@@ -123,7 +158,7 @@ public class SecurityConfig {
     }
 
     @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws AuthenticationException, Exception {
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();
     }
 }
