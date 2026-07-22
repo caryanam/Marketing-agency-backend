@@ -272,4 +272,3 @@ public class ClientSubscriptionServiceImpl implements ClientSubscriptionService 
         return modelMapper.map(subscription, ClientSubscriptionResponseDTO.class);
     }
 }
- 

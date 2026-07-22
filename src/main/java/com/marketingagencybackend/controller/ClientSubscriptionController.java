@@ -72,9 +72,11 @@ public class ClientSubscriptionController {
     @GetMapping("/subscription/current")
     @Operation(summary = "Get current active subscription details")
     public ResponseEntity<ApiResponseDTO<ClientSubscriptionResponseDTO>> getCurrentSubscription(
-            @AuthenticationPrincipal CustomUserDetails client) {
+            @AuthenticationPrincipal CustomUserDetails client,
+            @RequestParam(required = false) Long clientId) {
+        Long targetId = (clientId != null && client.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"))) ? clientId : client.getId();
         return ResponseEntity.ok(new ApiResponseDTO<>("SUCCESS", "Current subscription fetched",
-                subscriptionService.getCurrentSubscription(client.getId())));
+                subscriptionService.getCurrentSubscription(targetId)));
     }
 
     @GetMapping("/subscription/history")
