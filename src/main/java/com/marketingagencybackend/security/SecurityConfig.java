@@ -59,7 +59,8 @@ public class SecurityConfig {
                         ).permitAll()
                         .requestMatchers(HttpMethod.GET,
                                 "/api/feedback/all",
-                                "/api/feedback/*"
+                                "/api/feedback/*",
+                                "/api/plans/**"
                         ).permitAll()
 
                         // 4. Feedback Management Endpoints (CLIENT & ADMIN)
@@ -76,8 +77,12 @@ public class SecurityConfig {
 
                         // 6. Subscription & Billing Operations (CLIENT & ADMIN)
                         .requestMatchers(
-                                "/api/subscription/**"
+                                "/api/subscription/**",
+                                "/api/customer-data/client/**"
                         ).hasAnyRole("CLIENT", "ADMIN")
+                        .requestMatchers(
+                                "/api/customer-data/import"
+                        ).hasRole("ADMIN")
                         .requestMatchers(
                                 "/api/plans/**",
                                 "/api/payment/**"

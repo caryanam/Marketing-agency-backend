@@ -52,28 +52,7 @@ public class AdminController {
 
 
 
-    @PostMapping(value = "/customer-data/import", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @Operation(summary = "Import customer data from an excel sheet (.xlsx/.xls)", description = "Access Level: Protected [Required Role: ADMIN]")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Excel data imported successfully"),
-            @ApiResponse(responseCode = "400", description = "Invalid or empty file uploaded"),
-            @ApiResponse(responseCode = "403", description = "Forbidden - Admin role required")
-    })
-    public ResponseEntity<ApiResponseDTO<ExcelImportResponseDTO>> importCustomerData(
-            @RequestParam("file") MultipartFile file) {
 
-        log.info("Admin importing customer data from file: {}", file.getOriginalFilename());
-
-        ExcelImportResponseDTO responseDTO = customerDataService.importFromExcel(file);
-
-        return ResponseEntity.ok(
-                ApiResponseDTO.<ExcelImportResponseDTO>builder()
-                        .status("SUCCESS")
-                        .message("Customer data imported successfully")
-                        .data(responseDTO)
-                        .build()
-        );
-    }
 
     @PatchMapping("/feedback/approve-reject")
     @Operation(summary = "Approve or Reject feedback", description = "Access Level: Protected [Required Role: ADMIN]")

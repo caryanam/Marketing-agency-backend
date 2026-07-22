@@ -9,6 +9,8 @@ public record CustomerDataResponseDTO(
         Long id,
         String customerName,
         String whatsappNumber,
+        Long clientId,
+        com.marketingagencybackend.enums.BusinessCategory businessCategory,
         LocalDateTime createdAt
 
 ) {
@@ -19,6 +21,8 @@ public record CustomerDataResponseDTO(
                 customerData.getId(),
                 customerData.getCustomerName(),
                 customerData.getWhatsappNumber(),
+                customerData.getClientId(),
+                customerData.getBusinessCategory(),
                 customerData.getCreatedAt()
         );
     }
