@@ -74,9 +74,11 @@ public class SecurityConfig {
                                 "/api/client/**"
                         ).hasAnyRole("CLIENT", "ADMIN")
 
-                        // 6. Subscription Purchase Operations (CLIENT Only)
+                        // 6. Subscription & Billing Operations (CLIENT Only)
                         .requestMatchers(
-                                "/api/subscription/**"
+                                "/api/subscription/**",
+                                "/api/plans/**",
+                                "/api/payment/**"
                         ).hasRole("CLIENT")
 
                         // 7. Admin Management Operations (ADMIN Only)
@@ -142,7 +144,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("https://frontend-domain.com"));
+        configuration.setAllowedOrigins(List.of("https://frontend-domain.com", "http://localhost:5173/"));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("Authorization", "Content-Type"));
         configuration.setAllowCredentials(true);

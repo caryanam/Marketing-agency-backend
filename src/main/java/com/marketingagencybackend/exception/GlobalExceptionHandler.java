@@ -243,4 +243,18 @@ public class GlobalExceptionHandler {
                 )
         );
     }
+
+    //Subscription Exception
+    @ExceptionHandler(SubscriptionException.class)
+    public ResponseEntity<ApiResponseDTO<Object>> handleSubscriptionException(
+            SubscriptionException ex) {
+        return build(HttpStatus.BAD_REQUEST, ex.getMessage());
+    }
+
+    //Campaign Exception
+    @ExceptionHandler(CampaignException.class)
+    public ResponseEntity<ApiResponseDTO<Object>> handleCampaignException(
+            CampaignException ex) {
+        return build(HttpStatus.BAD_REQUEST, ex.getMessage());
+    }
 }

@@ -1,6 +1,6 @@
 package com.marketingagencybackend.enums;
 
-public enum BillingBasis {
+public enum PlanType {
     DAILY,
     MONTHLY
 }

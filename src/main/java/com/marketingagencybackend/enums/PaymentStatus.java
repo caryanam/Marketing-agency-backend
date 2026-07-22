@@ -1,6 +1,6 @@
 package com.marketingagencybackend.enums;
 
-public enum SubscriptionApprovalStatus {
+public enum PaymentStatus {
     PENDING,
     APPROVED,
     REJECTED
