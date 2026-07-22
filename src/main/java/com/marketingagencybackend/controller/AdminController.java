@@ -4,6 +4,7 @@ import com.marketingagencybackend.dto.ApiResponseDTO;
 import com.marketingagencybackend.dto.ExcelImportResponseDTO;
 import com.marketingagencybackend.dto.FeedbackApprovalRequestDTO;
 import com.marketingagencybackend.dto.FeedbackResponseDTO;
+import com.marketingagencybackend.service.ClientService;
 import com.marketingagencybackend.service.CustomerDataService;
 import com.marketingagencybackend.service.FeedbackService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -30,6 +31,27 @@ public class AdminController {
 
     private final FeedbackService feedbackService;
     private final CustomerDataService customerDataService;
+    private final ClientService clientService;
+
+    @GetMapping("/clients")
+    @Operation(summary = "Get all clients for Admin Dashboard (Ordered by Latest First)", description = "Access Level: Protected [Required Role: ADMIN]")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Clients fetched successfully"),
+            @ApiResponse(responseCode = "403", description = "Forbidden - Admin role required")
+    })
+    public ResponseEntity<ApiResponseDTO<List<com.marketingagencybackend.dto.ClientResponseDTO>>> getAllClientsForDashboard() {
+        log.info("Admin fetching all clients for dashboard");
+        return ResponseEntity.ok(
+                ApiResponseDTO.<List<com.marketingagencybackend.dto.ClientResponseDTO>>builder()
+                        .status("SUCCESS")
+                        .message("Clients fetched successfully")
+                        .data(clientService.getAllClientsForDashboard())
+                        .build()
+        );
+    }
+
+
+
     @PostMapping(value = "/customer-data/import", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "Import customer data from an excel sheet (.xlsx/.xls)", description = "Access Level: Protected [Required Role: ADMIN]")
     @ApiResponses({

@@ -76,6 +76,16 @@ public class ClientServiceImpl implements ClientService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public List<ClientResponseDTO> getAllClientsForDashboard() {
+
+        return clientRepository.findAllByOrderByCreatedAtDesc()
+                .stream()
+                .map(ClientResponseDTO::from)
+                .toList();
+    }
+
+    @Override
     public ClientResponseDTO updateClient(Long id,
                                           ClientUpdateRequestDTO request) {
 

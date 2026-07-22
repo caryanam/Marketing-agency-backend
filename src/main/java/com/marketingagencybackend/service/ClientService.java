@@ -14,6 +14,8 @@ public interface ClientService {
 
     List<ClientResponseDTO> getAllClients();
 
+    List<ClientResponseDTO> getAllClientsForDashboard();
+
     ClientResponseDTO updateClient(Long id, ClientUpdateRequestDTO request);
 
     void deleteClient(Long id);
