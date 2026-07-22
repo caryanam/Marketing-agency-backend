@@ -11,7 +11,6 @@ public class PaymentHistoryResponseDTO {
     private Long clientSubscriptionId;
     private Double amount;
     private String paymentMethod;
-    private String paymentReference;
     private PaymentStatus status;
     private String approvedBy;
     private LocalDateTime approvedAt;

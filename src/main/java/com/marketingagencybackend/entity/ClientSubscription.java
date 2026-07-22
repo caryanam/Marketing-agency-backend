@@ -34,8 +34,6 @@ public class ClientSubscription {
     @Column(nullable = false)
     private SubscriptionStatus subscriptionStatus;
 
-    private String paymentReference;
-
     private Double amount;
 
     @Column(nullable = false)

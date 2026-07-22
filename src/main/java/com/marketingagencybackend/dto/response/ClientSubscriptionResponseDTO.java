@@ -13,7 +13,6 @@ public class ClientSubscriptionResponseDTO {
     private PlanResponseDTO plan;
     private PaymentStatus paymentStatus;
     private SubscriptionStatus subscriptionStatus;
-    private String paymentReference;
     private Double amount;
     private LocalDateTime purchaseDate;
     private LocalDateTime approvedDate;

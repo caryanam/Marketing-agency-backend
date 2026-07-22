@@ -74,9 +74,11 @@ public class SecurityConfig {
                                 "/api/client/**"
                         ).hasAnyRole("CLIENT", "ADMIN")
 
-                        // 6. Subscription & Billing Operations (CLIENT Only)
+                        // 6. Subscription & Billing Operations (CLIENT & ADMIN)
                         .requestMatchers(
-                                "/api/subscription/**",
+                                "/api/subscription/**"
+                        ).hasAnyRole("CLIENT", "ADMIN")
+                        .requestMatchers(
                                 "/api/plans/**",
                                 "/api/payment/**"
                         ).hasRole("CLIENT")

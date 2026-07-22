@@ -25,8 +25,6 @@ public class PaymentHistory {
 
     private String paymentMethod;
 
-    private String paymentReference;
-
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private PaymentStatus status;

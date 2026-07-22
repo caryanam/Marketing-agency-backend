@@ -88,9 +88,11 @@ public class ClientSubscriptionController {
     @GetMapping("/subscription/usage")
     @Operation(summary = "Get current usage metrics (messages and campaigns)")
     public ResponseEntity<ApiResponseDTO<SubscriptionUsageResponseDTO>> getSubscriptionUsage(
-            @AuthenticationPrincipal CustomUserDetails client) {
+            @AuthenticationPrincipal CustomUserDetails client,
+            @RequestParam(required = false) Long clientId) {
+        Long targetId = (clientId != null && client.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"))) ? clientId : client.getId();
         return ResponseEntity.ok(new ApiResponseDTO<>("SUCCESS", "Subscription usage fetched",
-                subscriptionService.getSubscriptionUsage(client.getId())));
+                subscriptionService.getSubscriptionUsage(targetId)));
     }
 
     @GetMapping("/payment/history")
@@ -104,8 +106,10 @@ public class ClientSubscriptionController {
     @GetMapping("/subscription/campaigns")
     @Operation(summary = "Get current client's campaigns")
     public ResponseEntity<ApiResponseDTO<List<CampaignResponseDTO>>> getClientCampaigns(
-            @AuthenticationPrincipal CustomUserDetails client) {
+            @AuthenticationPrincipal CustomUserDetails client,
+            @RequestParam(required = false) Long clientId) {
+        Long targetId = (clientId != null && client.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"))) ? clientId : client.getId();
         return ResponseEntity.ok(new ApiResponseDTO<>("SUCCESS", "Campaigns fetched successfully",
-                campaignService.getCampaignsByClient(client.getId())));
+                campaignService.getCampaignsByClient(targetId)));
     }
 }

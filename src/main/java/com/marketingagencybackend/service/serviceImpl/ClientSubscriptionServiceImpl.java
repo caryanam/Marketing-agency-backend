@@ -44,23 +44,23 @@ public class ClientSubscriptionServiceImpl implements ClientSubscriptionService 
     @Override
     @Transactional
     public ClientSubscriptionResponseDTO purchaseSubscription(Long clientId, PurchaseSubscriptionRequestDTO request) {
-        
+
         Client client = clientRepository.findById(clientId)
                 .orElseThrow(() -> new ResourceNotFoundException("Client not found"));
-                
+
         SubscriptionPlan plan = planRepository.findById(request.getPlanId())
                 .orElseThrow(() -> new ResourceNotFoundException("Plan not found"));
-                
+
         if (!plan.getIsActive()) {
             throw new SubscriptionException("This plan is currently disabled");
         }
-        
+
         // Check if there's already a pending payment or active subscription
         Optional<ClientSubscription> activeSub = clientSubscriptionRepository.findByClientIdAndSubscriptionStatus(clientId, SubscriptionStatus.ACTIVE);
         if (activeSub.isPresent()) {
             throw new SubscriptionException("You already have an active subscription. Please use upgrade instead.");
         }
-        
+
         Optional<ClientSubscription> pendingSub = clientSubscriptionRepository.findByClientIdAndSubscriptionStatus(clientId, SubscriptionStatus.PAYMENT_PENDING);
         if (pendingSub.isPresent()) {
             throw new SubscriptionException("You already have a pending subscription purchase.");
@@ -72,19 +72,18 @@ public class ClientSubscriptionServiceImpl implements ClientSubscriptionService 
         subscription.setSubscriptionPlan(plan);
         subscription.setPaymentStatus(PaymentStatus.PENDING);
         subscription.setSubscriptionStatus(SubscriptionStatus.PAYMENT_PENDING);
-        subscription.setPaymentReference(request.getPaymentReference());
         subscription.setAmount(plan.getPrice());
         subscription.setPurchaseDate(LocalDateTime.now());
-        
+
         ClientSubscription savedSubscription = clientSubscriptionRepository.save(subscription);
-        
+
         // Create payment history
         createPaymentHistory(savedSubscription, request.getPaymentMethod());
-        
+
         // Send Notifications
-        notificationService.sendNotification(client.getEmail(), "Subscription Purchase Pending", 
+        notificationService.sendNotification(client.getEmail(), "Subscription Purchase Pending",
                 "You have requested to purchase the " + plan.getPlanName() + " plan. Awaiting Admin verification.", com.marketingagencybackend.enums.NotificationType.PAYMENT);
-        notificationService.sendToAllAdmins("New Subscription Purchase", 
+        notificationService.sendToAllAdmins("New Subscription Purchase",
                 "Client " + client.getOwnerName() + " has purchased the " + plan.getPlanName() + " plan. Payment requires verification.", com.marketingagencybackend.enums.NotificationType.PAYMENT);
 
         return mapToResponse(savedSubscription);
@@ -93,21 +92,21 @@ public class ClientSubscriptionServiceImpl implements ClientSubscriptionService 
     @Override
     @Transactional
     public ClientSubscriptionResponseDTO upgradeSubscription(Long clientId, PurchaseSubscriptionRequestDTO request) {
-        
+
         Client client = clientRepository.findById(clientId)
                 .orElseThrow(() -> new ResourceNotFoundException("Client not found"));
-                
+
         SubscriptionPlan plan = planRepository.findById(request.getPlanId())
                 .orElseThrow(() -> new ResourceNotFoundException("Plan not found"));
-                
+
         if (!plan.getIsActive()) {
             throw new SubscriptionException("This plan is currently disabled");
         }
-        
+
         // Ensure there is an active subscription to upgrade from
         ClientSubscription activeSub = clientSubscriptionRepository.findByClientIdAndSubscriptionStatus(clientId, SubscriptionStatus.ACTIVE)
                 .orElseThrow(() -> new SubscriptionException("No active subscription found to upgrade. Please purchase a new plan instead."));
-        
+
         // Cannot upgrade to same plan
         if (activeSub.getSubscriptionPlan().getId().equals(plan.getId())) {
             throw new SubscriptionException("You are already on this plan.");
@@ -118,20 +117,19 @@ public class ClientSubscriptionServiceImpl implements ClientSubscriptionService 
         newSubscription.setClient(client);
         newSubscription.setSubscriptionPlan(plan);
         newSubscription.setPaymentStatus(PaymentStatus.PENDING);
-        newSubscription.setSubscriptionStatus(SubscriptionStatus.PAYMENT_PENDING); // Will become active on approval, and old one will be UPGRADED
-        newSubscription.setPaymentReference(request.getPaymentReference());
+        newSubscription.setSubscriptionStatus(SubscriptionStatus.PAYMENT_PENDING);
         newSubscription.setAmount(plan.getPrice());
         newSubscription.setPurchaseDate(LocalDateTime.now());
-        
+
         ClientSubscription savedSubscription = clientSubscriptionRepository.save(newSubscription);
-        
+
         // Create payment history
         createPaymentHistory(savedSubscription, request.getPaymentMethod());
-        
+
         // Send Notifications
-        notificationService.sendNotification(client.getEmail(), "Subscription Upgrade Pending", 
+        notificationService.sendNotification(client.getEmail(), "Subscription Upgrade Pending",
                 "You have requested to upgrade to the " + plan.getPlanName() + " plan. Awaiting Admin verification.", com.marketingagencybackend.enums.NotificationType.SUBSCRIPTION);
-        notificationService.sendToAllAdmins("New Subscription Upgrade", 
+        notificationService.sendToAllAdmins("New Subscription Upgrade",
                 "Client " + client.getOwnerName() + " requested an upgrade to the " + plan.getPlanName() + " plan. Payment requires verification.", com.marketingagencybackend.enums.NotificationType.SUBSCRIPTION);
 
         return mapToResponse(savedSubscription);
@@ -142,7 +140,6 @@ public class ClientSubscriptionServiceImpl implements ClientSubscriptionService 
         payment.setClientSubscription(subscription);
         payment.setAmount(subscription.getAmount());
         payment.setPaymentMethod(paymentMethod);
-        payment.setPaymentReference(subscription.getPaymentReference());
         payment.setStatus(PaymentStatus.PENDING);
         paymentHistoryRepository.save(payment);
     }
@@ -165,23 +162,23 @@ public class ClientSubscriptionServiceImpl implements ClientSubscriptionService 
     public SubscriptionUsageResponseDTO getSubscriptionUsage(Long clientId) {
         ClientSubscription activeSub = clientSubscriptionRepository.findByClientIdAndSubscriptionStatus(clientId, SubscriptionStatus.ACTIVE)
                 .orElseThrow(() -> new SubscriptionException("No active subscription found"));
-                
+
         SubscriptionPlan plan = activeSub.getSubscriptionPlan();
-        
+
         SubscriptionUsageResponseDTO usage = new SubscriptionUsageResponseDTO();
         usage.setClientId(clientId);
         usage.setPlanName(plan.getPlanName() + " (" + plan.getPlanCode() + ")");
         usage.setTotalMessagesAllowed(plan.getMessageLimit());
         usage.setRemainingMessages(activeSub.getRemainingMessages());
         usage.setMessagesUsed(plan.getMessageLimit() - activeSub.getRemainingMessages());
-        
+
         usage.setTotalCampaignsAllowed(plan.getCampaignLimit());
         usage.setCampaignsUsed(activeSub.getCampaignUsed());
         usage.setRemainingCampaigns(plan.getCampaignLimit() - activeSub.getCampaignUsed());
-        
+
         long days = ChronoUnit.DAYS.between(LocalDateTime.now(), activeSub.getExpiryDate());
         usage.setDaysRemaining(days > 0 ? days + " days" : "Expires today");
-        
+
         return usage;
     }
 
@@ -218,35 +215,35 @@ public class ClientSubscriptionServiceImpl implements ClientSubscriptionService 
     public ClientSubscriptionResponseDTO approveOrRejectPayment(Long paymentId, String adminEmail, PaymentApprovalRequestDTO request) {
         PaymentHistory payment = paymentHistoryRepository.findById(paymentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Payment not found"));
-                
+
         if (payment.getStatus() != PaymentStatus.PENDING) {
             throw new SubscriptionException("Payment is already " + payment.getStatus());
         }
-        
+
         if (request.getStatus() != PaymentStatus.APPROVED && request.getStatus() != PaymentStatus.REJECTED) {
             throw new SubscriptionException("Status must be APPROVED or REJECTED");
         }
-        
+
         ClientSubscription subscription = payment.getClientSubscription();
         SubscriptionPlan plan = subscription.getSubscriptionPlan();
-        
+
         // Update Payment
         payment.setStatus(request.getStatus());
         payment.setApprovedBy(adminEmail);
         payment.setApprovedAt(LocalDateTime.now());
         payment.setRemarks(request.getRemarks());
         paymentHistoryRepository.save(payment);
-        
+
         if (request.getStatus() == PaymentStatus.APPROVED) {
             // Mark old active subscription as UPGRADED if this is an upgrade
             Optional<ClientSubscription> oldActiveSub = clientSubscriptionRepository.findByClientIdAndSubscriptionStatus(
                     subscription.getClient().getId(), SubscriptionStatus.ACTIVE);
-            
+
             oldActiveSub.ifPresent(oldSub -> {
                 oldSub.setSubscriptionStatus(SubscriptionStatus.UPGRADED);
                 clientSubscriptionRepository.save(oldSub);
             });
-            
+
             // Update Subscription to ACTIVE
             subscription.setPaymentStatus(PaymentStatus.APPROVED);
             subscription.setSubscriptionStatus(SubscriptionStatus.ACTIVE);
@@ -254,24 +251,25 @@ public class ClientSubscriptionServiceImpl implements ClientSubscriptionService 
             subscription.setExpiryDate(LocalDateTime.now().plusDays(plan.getValidityDays()));
             subscription.setRemainingMessages(plan.getMessageLimit());
             subscription.setCampaignUsed(0);
-            
-            notificationService.sendNotification(subscription.getClient().getEmail(), "Payment Approved", 
+
+            notificationService.sendNotification(subscription.getClient().getEmail(), "Payment Approved",
                     "Your payment has been verified. The " + plan.getPlanName() + " plan is now active!", com.marketingagencybackend.enums.NotificationType.SUBSCRIPTION);
         } else {
             // Update Subscription to REJECTED
             subscription.setPaymentStatus(PaymentStatus.REJECTED);
             subscription.setSubscriptionStatus(SubscriptionStatus.REJECTED);
-            
-            notificationService.sendNotification(subscription.getClient().getEmail(), "Payment Rejected", 
+
+            notificationService.sendNotification(subscription.getClient().getEmail(), "Payment Rejected",
                     "Your payment verification failed. Reason: " + request.getRemarks(), com.marketingagencybackend.enums.NotificationType.PAYMENT);
         }
-        
+
         ClientSubscription savedSubscription = clientSubscriptionRepository.save(subscription);
-        
+
         return mapToResponse(savedSubscription);
     }
-    
+
     private ClientSubscriptionResponseDTO mapToResponse(ClientSubscription subscription) {
         return modelMapper.map(subscription, ClientSubscriptionResponseDTO.class);
     }
 }
+ 
