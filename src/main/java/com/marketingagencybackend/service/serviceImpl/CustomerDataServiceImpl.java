@@ -152,8 +152,10 @@ public class CustomerDataServiceImpl implements CustomerDataService {
                 .collect(Collectors.toList());
     }
 
-    public List<ImportLog> getImportLogsByClientId(Long clientId) {
-        return importLogRepository.findByClientIdOrderByImportedAtDesc(clientId);
+    public List<com.marketingagencybackend.dto.ImportLogResponseDTO> getImportLogsByClientId(Long clientId) {
+        return importLogRepository.findByClientIdOrderByImportedAtDesc(clientId).stream()
+                .map(com.marketingagencybackend.dto.ImportLogResponseDTO::from)
+                .collect(Collectors.toList());
     }
 
     private void validateFile(MultipartFile file) {

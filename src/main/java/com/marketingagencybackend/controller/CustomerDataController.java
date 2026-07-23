@@ -75,11 +75,11 @@ public class CustomerDataController {
             @ApiResponse(responseCode = "200", description = "Import stats fetched successfully"),
             @ApiResponse(responseCode = "403", description = "Forbidden - Admin or Client role required")
     })
-    public ResponseEntity<ApiResponseDTO<List<com.marketingagencybackend.entity.ImportLog>>> getImportStatsByClientId(
+    public ResponseEntity<ApiResponseDTO<List<com.marketingagencybackend.dto.ImportLogResponseDTO>>> getImportStatsByClientId(
             @PathVariable Long clientId) {
         log.info("User fetching import stats for clientId: {}", clientId);
         return ResponseEntity.ok(
-                ApiResponseDTO.<List<com.marketingagencybackend.entity.ImportLog>>builder()
+                ApiResponseDTO.<List<com.marketingagencybackend.dto.ImportLogResponseDTO>>builder()
                         .status("SUCCESS")
                         .message("Import stats fetched successfully")
                         .data(customerDataService.getImportLogsByClientId(clientId))
