@@ -10,4 +10,6 @@ import java.util.List;
 public interface MessageLogRepository extends JpaRepository<MessageLog, Long> {
     List<MessageLog> findByClientId(Long clientId);
     List<MessageLog> findByCampaignId(Long campaignId);
+
+    void deleteByClientId(Long clientId);
 }

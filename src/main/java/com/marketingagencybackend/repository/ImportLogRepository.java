@@ -10,4 +10,6 @@ import java.util.List;
 public interface ImportLogRepository extends JpaRepository<ImportLog, Long> {
     List<ImportLog> findByClientIdOrderByImportedAtDesc(Long clientId);
     java.util.Optional<ImportLog> findFirstByClientIdOrderByImportedAtDesc(Long clientId);
+
+    void deleteByClientId(Long clientId);
 }

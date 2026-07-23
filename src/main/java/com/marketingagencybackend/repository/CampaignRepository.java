@@ -12,4 +12,6 @@ public interface CampaignRepository extends JpaRepository<Campaign, Long> {
     List<Campaign> findByClientIdOrderByCreatedAtDesc(Long clientId);
     
     List<Campaign> findBySubscriptionIdOrderByCreatedAtDesc(Long subscriptionId);
+
+    void deleteByClientId(Long clientId);
 }

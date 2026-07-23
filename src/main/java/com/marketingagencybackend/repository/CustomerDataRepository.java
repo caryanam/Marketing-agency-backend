@@ -21,4 +21,6 @@ public interface CustomerDataRepository extends JpaRepository<CustomerData, Long
         "AND c.id NOT IN (SELECT m.customer.id FROM MessageLog m WHERE m.client.id = :clientId)"
     )
     List<CustomerData> findUncontactedCustomers(@Param("clientId") Long clientId, Pageable pageable);
+
+    void deleteByClientId(Long clientId);
 }

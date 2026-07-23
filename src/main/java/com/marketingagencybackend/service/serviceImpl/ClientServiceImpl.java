@@ -24,7 +24,12 @@ import java.util.List;
 public class ClientServiceImpl implements ClientService {
 
     private final ClientRepository clientRepository;
-
+    private final com.marketingagencybackend.repository.MessageLogRepository messageLogRepository;
+    private final com.marketingagencybackend.repository.ImportLogRepository importLogRepository;
+    private final com.marketingagencybackend.repository.CustomerDataRepository customerDataRepository;
+    private final com.marketingagencybackend.repository.CampaignRepository campaignRepository;
+    private final com.marketingagencybackend.repository.PaymentHistoryRepository paymentHistoryRepository;
+    private final com.marketingagencybackend.repository.ClientSubscriptionRepository subscriptionRepository;
     private final PasswordEncoder passwordEncoder;
 
     @Override
@@ -119,7 +124,7 @@ public class ClientServiceImpl implements ClientService {
     public void deleteClient(Long id) {
 
         Client client = findClient(id);
-
+        deleteClientAssociatedData(id);
         clientRepository.delete(client);
 
         log.info("Client deleted : {}", id);
@@ -137,9 +142,19 @@ public class ClientServiceImpl implements ClientService {
             throw new IllegalArgumentException("Invalid password. Account deletion denied.");
         }
 
+        deleteClientAssociatedData(client.getId());
         clientRepository.delete(client);
 
         log.info("Client account deleted for email: {}", email);
+    }
+
+    private void deleteClientAssociatedData(Long clientId) {
+        messageLogRepository.deleteByClientId(clientId);
+        importLogRepository.deleteByClientId(clientId);
+        customerDataRepository.deleteByClientId(clientId);
+        paymentHistoryRepository.deleteByClientSubscription_Client_Id(clientId);
+        campaignRepository.deleteByClientId(clientId);
+        subscriptionRepository.deleteByClientId(clientId);
     }
 
     private Client findClient(Long id) {

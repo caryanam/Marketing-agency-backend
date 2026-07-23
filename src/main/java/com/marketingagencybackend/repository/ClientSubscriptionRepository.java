@@ -15,6 +15,7 @@ public interface ClientSubscriptionRepository extends JpaRepository<ClientSubscr
     Optional<ClientSubscription> findByClientIdAndSubscriptionStatus(Long clientId, SubscriptionStatus status);
     
     List<ClientSubscription> findByClientIdOrderByCreatedAtDesc(Long clientId);
-    
     List<ClientSubscription> findBySubscriptionStatusAndExpiryDateBefore(SubscriptionStatus status, LocalDateTime dateTime);
+
+    void deleteByClientId(Long clientId);
 }

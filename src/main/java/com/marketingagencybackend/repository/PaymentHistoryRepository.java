@@ -11,6 +11,7 @@ import java.util.List;
 public interface PaymentHistoryRepository extends JpaRepository<PaymentHistory, Long> {
 
     List<PaymentHistory> findByClientSubscription_ClientIdOrderByCreatedAtDesc(Long clientId);
-    
     List<PaymentHistory> findByStatusOrderByCreatedAtDesc(PaymentStatus status);
+
+    void deleteByClientSubscription_Client_Id(Long clientId);
 }
