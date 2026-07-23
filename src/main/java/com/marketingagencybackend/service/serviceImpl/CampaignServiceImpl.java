@@ -32,6 +32,8 @@ public class CampaignServiceImpl implements CampaignService {
     private final CampaignRepository campaignRepository;
     private final ClientRepository clientRepository;
     private final ClientSubscriptionRepository subscriptionRepository;
+    private final com.marketingagencybackend.repository.CustomerDataRepository customerDataRepository;
+    private final com.marketingagencybackend.repository.MessageLogRepository messageLogRepository;
     private final NotificationService notificationService;
     private final ModelMapper modelMapper;
 
@@ -91,19 +93,44 @@ public class CampaignServiceImpl implements CampaignService {
         if (activeSub.getRemainingMessages() < messagesToSend) {
             throw new CampaignException("Message Limit Exceeded. Remaining: " + activeSub.getRemainingMessages() + ", Requested: " + messagesToSend);
         }
+
+        // Fetch uncontacted customers
+        List<com.marketingagencybackend.entity.CustomerData> uncontactedCustomers = 
+            customerDataRepository.findUncontactedCustomers(
+                campaign.getClient().getId(), 
+                org.springframework.data.domain.PageRequest.of(0, messagesToSend)
+            );
+
+        if (uncontactedCustomers.isEmpty()) {
+            throw new CampaignException("No new uncontacted customers available for this client.");
+        }
+
+        int actualSent = uncontactedCustomers.size();
         
         // Execute run
         campaign.setCampaignStatus(CampaignStatus.RUNNING);
-        campaign.setMessagesSent(campaign.getMessagesSent() + messagesToSend);
+        campaign.setMessagesSent(campaign.getMessagesSent() + actualSent);
         
         // Deduct messages
-        activeSub.setRemainingMessages(activeSub.getRemainingMessages() - messagesToSend);
+        activeSub.setRemainingMessages(activeSub.getRemainingMessages() - actualSent);
+
+        // Save Message Logs
+        List<com.marketingagencybackend.entity.MessageLog> logs = new java.util.ArrayList<>();
+        for (com.marketingagencybackend.entity.CustomerData customer : uncontactedCustomers) {
+            logs.add(com.marketingagencybackend.entity.MessageLog.builder()
+                    .client(campaign.getClient())
+                    .customer(customer)
+                    .campaign(campaign)
+                    .status("SENT")
+                    .build());
+        }
+        messageLogRepository.saveAll(logs);
         
         campaignRepository.save(campaign);
         subscriptionRepository.save(activeSub);
         
         notificationService.sendNotification(activeSub.getClient().getEmail(), "Campaign Running", 
-                "Your campaign '" + campaign.getCampaignName() + "' is running. " + messagesToSend + " messages sent.", com.marketingagencybackend.enums.NotificationType.CAMPAIGN);
+                "Your campaign '" + campaign.getCampaignName() + "' is running. " + actualSent + " messages sent.", com.marketingagencybackend.enums.NotificationType.CAMPAIGN);
 
         return mapToDTO(campaign);
     }
