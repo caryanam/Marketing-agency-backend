@@ -68,4 +68,22 @@ public class CustomerDataController {
                         .build()
         );
     }
+
+    @GetMapping("/import-stats/{clientId}")
+    @Operation(summary = "Get import stats (logs) by client ID", description = "Access Level: Protected [Required Role: ADMIN, CLIENT]")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Import stats fetched successfully"),
+            @ApiResponse(responseCode = "403", description = "Forbidden - Admin or Client role required")
+    })
+    public ResponseEntity<ApiResponseDTO<List<com.marketingagencybackend.entity.ImportLog>>> getImportStatsByClientId(
+            @PathVariable Long clientId) {
+        log.info("User fetching import stats for clientId: {}", clientId);
+        return ResponseEntity.ok(
+                ApiResponseDTO.<List<com.marketingagencybackend.entity.ImportLog>>builder()
+                        .status("SUCCESS")
+                        .message("Import stats fetched successfully")
+                        .data(customerDataService.getImportLogsByClientId(clientId))
+                        .build()
+        );
+    }
 }

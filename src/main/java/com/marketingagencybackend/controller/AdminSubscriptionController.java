@@ -109,23 +109,6 @@ public class AdminSubscriptionController {
         return ResponseEntity.ok(new ApiResponseDTO<>("SUCCESS", "Campaign is running", campaignService.runCampaign(id, messagesToSend)));
     }
 
-    @PutMapping("/campaign/pause/{id}")
-    @Operation(summary = "Pause a running campaign")
-    public ResponseEntity<ApiResponseDTO<CampaignResponseDTO>> pauseCampaign(@PathVariable Long id) {
-        return ResponseEntity.ok(new ApiResponseDTO<>("SUCCESS", "Campaign paused", campaignService.pauseCampaign(id)));
-    }
-
-    @PutMapping("/campaign/resume/{id}")
-    @Operation(summary = "Resume a paused campaign")
-    public ResponseEntity<ApiResponseDTO<CampaignResponseDTO>> resumeCampaign(@PathVariable Long id) {
-        return ResponseEntity.ok(new ApiResponseDTO<>("SUCCESS", "Campaign resumed", campaignService.resumeCampaign(id)));
-    }
-
-    @PutMapping("/campaign/stop/{id}")
-    @Operation(summary = "Stop a campaign completely")
-    public ResponseEntity<ApiResponseDTO<CampaignResponseDTO>> stopCampaign(@PathVariable Long id) {
-        return ResponseEntity.ok(new ApiResponseDTO<>("SUCCESS", "Campaign stopped", campaignService.stopCampaign(id)));
-    }
 
     @GetMapping("/campaigns")
     @Operation(summary = "Get all campaigns across all clients")

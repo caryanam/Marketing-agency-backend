@@ -21,7 +21,7 @@ public record CustomerDataResponseDTO(
                 customerData.getId(),
                 customerData.getCustomerName(),
                 customerData.getWhatsappNumber(),
-                customerData.getClientId(),
+                customerData.getClient() != null ? customerData.getClient().getId() : null,
                 customerData.getBusinessCategory(),
                 customerData.getCreatedAt()
         );

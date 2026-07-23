@@ -11,12 +11,6 @@ public interface CampaignService {
     
     CampaignResponseDTO runCampaign(Long campaignId, Integer messagesToSend);
     
-    CampaignResponseDTO pauseCampaign(Long campaignId);
-    
-    CampaignResponseDTO resumeCampaign(Long campaignId);
-    
-    CampaignResponseDTO stopCampaign(Long campaignId);
-    
     List<CampaignResponseDTO> getAllCampaigns();
     
     List<CampaignResponseDTO> getCampaignsByClient(Long clientId);

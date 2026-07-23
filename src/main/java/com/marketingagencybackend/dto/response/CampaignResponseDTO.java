@@ -13,6 +13,7 @@ public class CampaignResponseDTO {
     private String campaignName;
     private CampaignStatus campaignStatus;
     private Integer messagesSent;
+    private Integer remainingMessages;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

@@ -69,7 +69,7 @@ public class CampaignServiceImpl implements CampaignService {
         notificationService.sendNotification(client.getEmail(), "New Campaign Created", 
                 "A new campaign '" + request.getCampaignName() + "' has been created for your account.", com.marketingagencybackend.enums.NotificationType.CAMPAIGN);
 
-        return modelMapper.map(savedCampaign, CampaignResponseDTO.class);
+        return mapToDTO(savedCampaign);
     }
 
     @Override
@@ -78,7 +78,7 @@ public class CampaignServiceImpl implements CampaignService {
         Campaign campaign = campaignRepository.findById(campaignId)
                 .orElseThrow(() -> new ResourceNotFoundException("Campaign not found"));
                 
-        if (campaign.getCampaignStatus() == CampaignStatus.COMPLETED || campaign.getCampaignStatus() == CampaignStatus.STOPPED) {
+        if (campaign.getCampaignStatus() == CampaignStatus.COMPLETED) {
             throw new CampaignException("Cannot run a campaign that is " + campaign.getCampaignStatus());
         }
         
@@ -105,77 +105,29 @@ public class CampaignServiceImpl implements CampaignService {
         notificationService.sendNotification(activeSub.getClient().getEmail(), "Campaign Running", 
                 "Your campaign '" + campaign.getCampaignName() + "' is running. " + messagesToSend + " messages sent.", com.marketingagencybackend.enums.NotificationType.CAMPAIGN);
 
-        return modelMapper.map(campaign, CampaignResponseDTO.class);
+        return mapToDTO(campaign);
     }
 
-    @Override
-    @Transactional
-    public CampaignResponseDTO pauseCampaign(Long campaignId) {
-        Campaign campaign = campaignRepository.findById(campaignId)
-                .orElseThrow(() -> new ResourceNotFoundException("Campaign not found"));
-                
-        if (campaign.getCampaignStatus() != CampaignStatus.RUNNING) {
-            throw new CampaignException("Only RUNNING campaigns can be paused. Current status: " + campaign.getCampaignStatus());
-        }
-        
-        campaign.setCampaignStatus(CampaignStatus.PAUSED);
-        Campaign saved = campaignRepository.save(campaign);
-        
-        notificationService.sendNotification(campaign.getSubscription().getClient().getEmail(), "Campaign Paused", 
-                "Your campaign '" + campaign.getCampaignName() + "' has been paused.", com.marketingagencybackend.enums.NotificationType.CAMPAIGN);
-                
-        return modelMapper.map(saved, CampaignResponseDTO.class);
-    }
 
-    @Override
-    @Transactional
-    public CampaignResponseDTO resumeCampaign(Long campaignId) {
-        Campaign campaign = campaignRepository.findById(campaignId)
-                .orElseThrow(() -> new ResourceNotFoundException("Campaign not found"));
-                
-        if (campaign.getCampaignStatus() != CampaignStatus.PAUSED) {
-            throw new CampaignException("Only PAUSED campaigns can be resumed. Current status: " + campaign.getCampaignStatus());
-        }
-        
-        campaign.setCampaignStatus(CampaignStatus.RUNNING);
-        Campaign saved = campaignRepository.save(campaign);
-        
-        notificationService.sendNotification(campaign.getSubscription().getClient().getEmail(), "Campaign Resumed", 
-                "Your campaign '" + campaign.getCampaignName() + "' has been resumed.", com.marketingagencybackend.enums.NotificationType.CAMPAIGN);
-                
-        return modelMapper.map(saved, CampaignResponseDTO.class);
-    }
-
-    @Override
-    @Transactional
-    public CampaignResponseDTO stopCampaign(Long campaignId) {
-        Campaign campaign = campaignRepository.findById(campaignId)
-                .orElseThrow(() -> new ResourceNotFoundException("Campaign not found"));
-                
-        if (campaign.getCampaignStatus() == CampaignStatus.COMPLETED || campaign.getCampaignStatus() == CampaignStatus.STOPPED) {
-            throw new CampaignException("Campaign is already " + campaign.getCampaignStatus());
-        }
-        
-        campaign.setCampaignStatus(CampaignStatus.STOPPED);
-        Campaign saved = campaignRepository.save(campaign);
-        
-        notificationService.sendNotification(campaign.getSubscription().getClient().getEmail(), "Campaign Stopped", 
-                "Your campaign '" + campaign.getCampaignName() + "' has been stopped by the Admin.", com.marketingagencybackend.enums.NotificationType.CAMPAIGN);
-                
-        return modelMapper.map(saved, CampaignResponseDTO.class);
-    }
 
     @Override
     public List<CampaignResponseDTO> getAllCampaigns() {
         return campaignRepository.findAll().stream()
-                .map(c -> modelMapper.map(c, CampaignResponseDTO.class))
+                .map(this::mapToDTO)
                 .collect(Collectors.toList());
     }
 
     @Override
     public List<CampaignResponseDTO> getCampaignsByClient(Long clientId) {
         return campaignRepository.findByClientIdOrderByCreatedAtDesc(clientId).stream()
-                .map(c -> modelMapper.map(c, CampaignResponseDTO.class))
+                .map(this::mapToDTO)
                 .collect(Collectors.toList());
+    }
+    private CampaignResponseDTO mapToDTO(Campaign campaign) {
+        CampaignResponseDTO dto = modelMapper.map(campaign, CampaignResponseDTO.class);
+        if (campaign.getSubscription() != null) {
+            dto.setRemainingMessages(campaign.getSubscription().getRemainingMessages());
+        }
+        return dto;
     }
 }
