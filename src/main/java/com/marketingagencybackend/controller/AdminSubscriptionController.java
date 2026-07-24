@@ -103,12 +103,6 @@ public class AdminSubscriptionController {
         return ResponseEntity.ok(new ApiResponseDTO<>("SUCCESS", "Campaign created successfully", campaignService.createCampaign(request)));
     }
 
-    @PutMapping("/campaign/run/{id}")
-    @Operation(summary = "Run a campaign (consumes messages)")
-    public ResponseEntity<ApiResponseDTO<CampaignResponseDTO>> runCampaign(@PathVariable Long id, @RequestParam Integer messagesToSend) {
-        return ResponseEntity.ok(new ApiResponseDTO<>("SUCCESS", "Campaign is running", campaignService.runCampaign(id, messagesToSend)));
-    }
-
 
     @GetMapping("/campaigns")
     @Operation(summary = "Get all campaigns across all clients")
@@ -124,3 +118,4 @@ public class AdminSubscriptionController {
         return ResponseEntity.ok(new ApiResponseDTO<>("SUCCESS", "Analytics fetched", analyticsService.getAdminAnalytics()));
     }
 }
+ 

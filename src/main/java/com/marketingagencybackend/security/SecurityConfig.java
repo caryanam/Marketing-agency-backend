@@ -78,11 +78,18 @@ public class SecurityConfig {
                         // 6. Subscription & Billing Operations (CLIENT & ADMIN)
                         .requestMatchers(
                                 "/api/subscription/**",
-                                "/api/customer-data/client/**"
+                                "/api/customer-data/client/**",
+                                "/api/upload/**"
+                        ).hasAnyRole("CLIENT", "ADMIN")
+                        .requestMatchers(HttpMethod.POST,
+                                "/api/whatsapp-templates/**"
+                        ).hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET,
+                                "/api/whatsapp-templates/**"
                         ).hasAnyRole("CLIENT", "ADMIN")
                         .requestMatchers(
                                 "/api/customer-data/import"
-                        ).hasRole("ADMIN")
+                        ).hasAnyRole("ADMIN","CLIENT")
                         .requestMatchers(
                                 "/api/plans/**",
                                 "/api/payment/**"

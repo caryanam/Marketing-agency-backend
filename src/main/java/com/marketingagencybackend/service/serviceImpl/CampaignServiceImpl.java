@@ -40,102 +40,55 @@ public class CampaignServiceImpl implements CampaignService {
     @Override
     @Transactional
     public CampaignResponseDTO createCampaign(CampaignRequestDTO request) {
-        
+
         Client client = clientRepository.findById(request.getClientId())
                 .orElseThrow(() -> new ResourceNotFoundException("Client not found"));
-                
+
         ClientSubscription activeSub = subscriptionRepository.findByClientIdAndSubscriptionStatus(request.getClientId(), SubscriptionStatus.ACTIVE)
                 .orElseThrow(() -> new SubscriptionException("Client does not have an active subscription"));
-                
+
         if (activeSub.getExpiryDate().isBefore(LocalDateTime.now())) {
             throw new SubscriptionException("Subscription has expired. Cannot create campaign.");
         }
-                
+
         if (activeSub.getCampaignUsed() >= activeSub.getSubscriptionPlan().getCampaignLimit()) {
             throw new CampaignException("Campaign Limit Exceeded. Maximum allowed: " + activeSub.getSubscriptionPlan().getCampaignLimit());
         }
-        
+
+        // Calculate target contacts and remaining quota
+        long targetContacts = customerDataRepository.countByClientId(request.getClientId());
+        int remainingQuota = activeSub.getRemainingMessages() != null ? activeSub.getRemainingMessages() : (activeSub.getSubscriptionPlan() != null ? activeSub.getSubscriptionPlan().getMessageLimit() : 0);
+        int dispatchCount = 0;
+        if (targetContacts > 0 && remainingQuota > 0) {
+            dispatchCount = (int) Math.min(targetContacts, (long) remainingQuota);
+        } else if (targetContacts > 0) {
+            dispatchCount = (int) targetContacts;
+        }
+
         Campaign campaign = new Campaign();
         campaign.setClient(client);
         campaign.setSubscription(activeSub);
         campaign.setCampaignName(request.getCampaignName());
-        campaign.setCampaignStatus(CampaignStatus.CREATED);
-        campaign.setMessagesSent(0);
-        
+        campaign.setTemplateId(request.getTemplateId());
+        campaign.setHeaderImageUrl(request.getHeaderImageUrl());
+        if (request.getTemplateValues() != null) {
+            campaign.setTemplateValuesJson(request.getTemplateValues().toString());
+        }
+        campaign.setCampaignStatus(dispatchCount > 0 ? CampaignStatus.RUNNING : CampaignStatus.CREATED);
+        campaign.setMessagesSent(dispatchCount);
+
         Campaign savedCampaign = campaignRepository.save(campaign);
-        
-        // Update client usage
-        activeSub.setCampaignUsed(activeSub.getCampaignUsed() + 1);
+
+        // Update client usage (campaigns used and remaining messages)
+        activeSub.setCampaignUsed((activeSub.getCampaignUsed() != null ? activeSub.getCampaignUsed() : 0) + 1);
+        activeSub.setRemainingMessages(Math.max(0, remainingQuota - dispatchCount));
         subscriptionRepository.save(activeSub);
-        
-        notificationService.sendNotification(client.getEmail(), "New Campaign Created", 
+
+        notificationService.sendNotification(client.getEmail(), "New Campaign Created",
                 "A new campaign '" + request.getCampaignName() + "' has been created for your account.", com.marketingagencybackend.enums.NotificationType.CAMPAIGN);
 
         return mapToDTO(savedCampaign);
     }
-
-    @Override
-    @Transactional
-    public CampaignResponseDTO runCampaign(Long campaignId, Integer messagesToSend) {
-        Campaign campaign = campaignRepository.findById(campaignId)
-                .orElseThrow(() -> new ResourceNotFoundException("Campaign not found"));
-                
-        if (campaign.getCampaignStatus() == CampaignStatus.COMPLETED) {
-            throw new CampaignException("Cannot run a campaign that is " + campaign.getCampaignStatus());
-        }
-        
-        ClientSubscription activeSub = campaign.getSubscription();
-        
-        if (activeSub.getExpiryDate().isBefore(LocalDateTime.now())) {
-            throw new SubscriptionException("Subscription has expired. Cannot run campaign.");
-        }
-        
-        if (activeSub.getRemainingMessages() < messagesToSend) {
-            throw new CampaignException("Message Limit Exceeded. Remaining: " + activeSub.getRemainingMessages() + ", Requested: " + messagesToSend);
-        }
-
-        // Fetch uncontacted customers
-        List<com.marketingagencybackend.entity.CustomerData> uncontactedCustomers = 
-            customerDataRepository.findUncontactedCustomers(
-                campaign.getClient().getId(), 
-                org.springframework.data.domain.PageRequest.of(0, messagesToSend)
-            );
-
-        if (uncontactedCustomers.isEmpty()) {
-            throw new CampaignException("No new uncontacted customers available for this client.");
-        }
-
-        int actualSent = uncontactedCustomers.size();
-        
-        // Execute run
-        campaign.setCampaignStatus(CampaignStatus.RUNNING);
-        campaign.setMessagesSent(campaign.getMessagesSent() + actualSent);
-        
-        // Deduct messages
-        activeSub.setRemainingMessages(activeSub.getRemainingMessages() - actualSent);
-
-        // Save Message Logs
-        List<com.marketingagencybackend.entity.MessageLog> logs = new java.util.ArrayList<>();
-        for (com.marketingagencybackend.entity.CustomerData customer : uncontactedCustomers) {
-            logs.add(com.marketingagencybackend.entity.MessageLog.builder()
-                    .client(campaign.getClient())
-                    .customer(customer)
-                    .campaign(campaign)
-                    .status("SENT")
-                    .build());
-        }
-        messageLogRepository.saveAll(logs);
-        
-        campaignRepository.save(campaign);
-        subscriptionRepository.save(activeSub);
-        
-        notificationService.sendNotification(activeSub.getClient().getEmail(), "Campaign Running", 
-                "Your campaign '" + campaign.getCampaignName() + "' is running. " + actualSent + " messages sent.", com.marketingagencybackend.enums.NotificationType.CAMPAIGN);
-
-        return mapToDTO(campaign);
-    }
-
-
 
     @Override
     public List<CampaignResponseDTO> getAllCampaigns() {

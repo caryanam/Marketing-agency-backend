@@ -14,6 +14,9 @@ import org.springframework.data.domain.Pageable;
 @Repository
 public interface CustomerDataRepository extends JpaRepository<CustomerData, Long> {
     List<CustomerData> findByClientId(Long clientId);
+
+    long countByClientId(Long clientId);
+
     Optional<CustomerData> findByClientIdAndWhatsappNumber(Long clientId, String whatsappNumber);
 
     @Query(

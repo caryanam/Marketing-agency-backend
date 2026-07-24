@@ -28,6 +28,15 @@ public class Campaign {
     @Column(nullable = false)
     private String campaignName;
 
+    @Column(name = "template_id")
+    private Long templateId;
+
+    @Column(name = "header_image_url", columnDefinition = "LONGTEXT")
+    private String headerImageUrl;
+
+    @Column(name = "template_values_json", columnDefinition = "LONGTEXT")
+    private String templateValuesJson;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private CampaignStatus campaignStatus;
