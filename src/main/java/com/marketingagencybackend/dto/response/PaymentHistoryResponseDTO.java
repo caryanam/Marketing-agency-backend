@@ -16,4 +16,5 @@ public class PaymentHistoryResponseDTO {
     private LocalDateTime approvedAt;
     private String remarks;
     private LocalDateTime createdAt;
+    private String planName;
 }

@@ -185,7 +185,11 @@ public class ClientSubscriptionServiceImpl implements ClientSubscriptionService 
     @Override
     public List<PaymentHistoryResponseDTO> getPaymentHistory(Long clientId) {
         return paymentHistoryRepository.findByClientSubscription_ClientIdOrderByCreatedAtDesc(clientId).stream()
-                .map(p -> modelMapper.map(p, PaymentHistoryResponseDTO.class))
+                .map(p -> {
+                    PaymentHistoryResponseDTO dto = modelMapper.map(p, PaymentHistoryResponseDTO.class);
+                    dto.setPlanName(p.getClientSubscription().getSubscriptionPlan().getPlanName());
+                    return dto;
+                })
                 .collect(Collectors.toList());
     }
 
@@ -199,14 +203,22 @@ public class ClientSubscriptionServiceImpl implements ClientSubscriptionService 
     @Override
     public List<PaymentHistoryResponseDTO> getAllPayments() {
         return paymentHistoryRepository.findAll().stream()
-                .map(p -> modelMapper.map(p, PaymentHistoryResponseDTO.class))
+                .map(p -> {
+                    PaymentHistoryResponseDTO dto = modelMapper.map(p, PaymentHistoryResponseDTO.class);
+                    dto.setPlanName(p.getClientSubscription().getSubscriptionPlan().getPlanName());
+                    return dto;
+                })
                 .collect(Collectors.toList());
     }
 
     @Override
     public List<PaymentHistoryResponseDTO> getPendingPayments() {
         return paymentHistoryRepository.findByStatusOrderByCreatedAtDesc(PaymentStatus.PENDING).stream()
-                .map(p -> modelMapper.map(p, PaymentHistoryResponseDTO.class))
+                .map(p -> {
+                    PaymentHistoryResponseDTO dto = modelMapper.map(p, PaymentHistoryResponseDTO.class);
+                    dto.setPlanName(p.getClientSubscription().getSubscriptionPlan().getPlanName());
+                    return dto;
+                })
                 .collect(Collectors.toList());
     }
 
